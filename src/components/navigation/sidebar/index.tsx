@@ -42,7 +42,7 @@ const Sidebar = () => {
         className="w-16 h-16 border rounded-full bg-gray-300 hover:bg-gray-100 cursor-pointer"
       >
         <img
-          src="https://picsum.photos/200"
+          src={`http://146.190.100.81:8081/file/get-avatar?id=${auth?.userId}`}
           className="w-16 h-16 rounded-full"
         />
       </div>
@@ -54,7 +54,7 @@ const Sidebar = () => {
           <div className="w-full">
             <div className="flex items-center my-3 gap-5">
               <img
-                src="https://picsum.photos/200"
+                src={`http://146.190.100.81:8081/file/get-avatar?id=${auth?.userId}`}
                 className="ml-8 w-8 h-8 rounded-full"
               />
               <h1 className="text-2xl font-bold">{auth?.userName}</h1>

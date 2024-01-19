@@ -6,9 +6,13 @@ import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { IDataset } from "@/interfaces/IDataset";
 
 import {
+  ArrowDownTrayIcon,
   ArrowLongDownIcon,
   ArrowLongUpIcon,
   ArrowsUpDownIcon,
+  LightBulbIcon,
+  PencilSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
   flexRender,
@@ -22,6 +26,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 type Props = {
   userId: number;
@@ -81,36 +86,55 @@ const TableDatasets = ({ userId }: Props) => {
     //   header: "Last Name",
     //   accessorKey: "lastname",
     // },
-    {
-      header: "Filepath",
-      accessorKey: "filepath",
-    },
+    // {
+    //   header: "Filepath",
+    //   accessorKey: "filepath",
+    // },
     {
       header: "Created At",
       accessorKey: "createTime",
     },
   ];
 
-  if (auth?.userId === userId.toString()) {
-    columns.push({
-      header: "Actions",
-      accessorKey: "actions",
-      cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <button className="border border-gray-300 p-2 rounded-md hover:bg-gray-300">
-            Edit
-          </button>
+  columns.push({
+    header: "Actions",
+    accessorKey: "actions",
+    cell: ({ row }: any) => (
+      <div className="flex gap-1">
+        {auth?.userId == userId.toString() && (
+          <div className="flex gap-1">
+            <button
+              title="Edit"
+              className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </button>
+            <button
+              title="Delete"
+              onClick={() => handleDelete(row)}
+              className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
+            >
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+        <Link to={`/tests/resource/${row.original.id}`}>
           <button
-            onClick={() => handleDelete(row)}
+            title="Test"
             className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
           >
-            Delete
+            <LightBulbIcon className="h-5 w-5" />
           </button>
-        </div>
-      ),
-    });
-  }
-
+        </Link>
+        <button
+          title="Download"
+          className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
+        >
+          <ArrowDownTrayIcon className="h-5 w-5" />
+        </button>
+      </div>
+    ),
+  });
   const handleDelete = (row: any) => {
     // Set the row to be deleted and show the alert
     setRowToDelete(row);
@@ -273,22 +297,20 @@ const TableDatasets = ({ userId }: Props) => {
             <button
               disabled={!table.getCanPreviousPage()}
               onClick={() => table.previousPage()}
-              className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${
-                !table.getCanPreviousPage()
-                  ? "disabled:opacity-50"
-                  : "hover:bg-gray-300"
-              }`}
+              className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
+                ? "disabled:opacity-50"
+                : "hover:bg-gray-300"
+                }`}
             >
               Previous Page
             </button>
             <button
               disabled={!table.getCanNextPage()}
               onClick={() => table.nextPage()}
-              className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${
-                !table.getCanNextPage()
-                  ? "disabled:opacity-50"
-                  : "hover:bg-gray-300"
-              }`}
+              className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
+                ? "disabled:opacity-50"
+                : "hover:bg-gray-300"
+                }`}
             >
               Next Page
             </button>

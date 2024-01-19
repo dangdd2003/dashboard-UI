@@ -44,7 +44,7 @@ const UserProfile = () => {
   return (
     <Container>
       <div className="flex flex-col items-center justify-center">
-        <img src={"https://picsum.photos/200"} alt="" />
+        <img src={`http://146.190.100.81:8081/file/get-avatar?id=${response?.data.id}`} alt="" className="w-60 h-60 rounded-full" />
         <h1 className="text-2xl font-bold my-2">{response.data.username}</h1>
         <span className="flex flex-col font-thin items-center justify-center">
           <p>Joined: {formattedCreateTime}</p>
@@ -52,18 +52,16 @@ const UserProfile = () => {
         </span>
       </div>
       <div
-        className={`flex w-auto h-auto mt-5 justify-center shadow-lg mb-5 ${
-          isAboveMedium ? "w-auto" : "w-3/4 mx-20"
-        }`}
+        className={`flex w-auto h-auto mt-5 justify-center shadow-lg mb-5 ${isAboveMedium ? "w-auto" : "w-3/4 mx-20"
+          }`}
       >
         <div
           className={`hover:bg-slate-300 pt-5 px-5`}
           onClick={() => setSelectedButton("resources")}
         >
           <button
-            className={`pb-2 border-gray-500 ${
-              selectedButton === "resources" ? "border-b-4" : ""
-            }`}
+            className={`pb-2 border-gray-500 ${selectedButton === "resources" ? "border-b-4" : ""
+              }`}
           >
             Resources
           </button>
@@ -73,9 +71,8 @@ const UserProfile = () => {
           onClick={() => setSelectedButton("models")}
         >
           <button
-            className={`pb-3 border-gray-500 ${
-              selectedButton === "models" ? "border-b-4" : ""
-            }`}
+            className={`pb-3 border-gray-500 ${selectedButton === "models" ? "border-b-4" : ""
+              }`}
           >
             Models
           </button>

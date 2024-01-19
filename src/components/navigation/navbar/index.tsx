@@ -1,16 +1,16 @@
+import DatasetSubmissionBox from "@/components/submissionbox/dataset";
+import ModelSubmissionBox from "@/components/submissionbox/model";
+import useAuth from "@/hooks/useAuth";
 import {
   Bars3Icon,
   CircleStackIcon,
   PlusIcon,
   PuzzlePieceIcon,
 } from "@heroicons/react/24/outline";
-import { Link, useLocation } from "react-router-dom";
-import { NavBarData } from "./NavBarData";
-import { useMediaQuery } from "react-responsive";
 import React, { useEffect, useRef, useState } from "react";
-import ModelSubmissionBox from "@/components/submissionbox/model";
-import DatasetSubmissionBox from "@/components/submissionbox/dataset";
-import useAuth from "@/hooks/useAuth";
+import { useMediaQuery } from "react-responsive";
+import { Link, Location, useLocation } from "react-router-dom";
+import { NavBarData } from "./NavBarData";
 
 const Navbar = React.memo(() => {
   const { auth } = useAuth();
@@ -24,6 +24,7 @@ const Navbar = React.memo(() => {
   const [isNewDatasetWindowVisible, setIsNewDatasetWindowVisible] = useState<
     boolean
   >(false);
+  const [previousLocation, setPreviousLocation] = useState<Location>();
 
   const location = useLocation();
   const isAboveMedium = useMediaQuery({ query: "(min-width: 768px)" });
@@ -55,12 +56,21 @@ const Navbar = React.memo(() => {
   }, []);
 
   useEffect(() => {
-    const currentPath = location.pathname;
-    const currentMenuItem = NavBarData.findIndex(
-      (item) => item.path === currentPath,
-    );
+  setPreviousLocation(location);
+}, [location]);
+
+  useEffect(() => {
+  const currentPath = location.pathname;
+  const currentMenuItem = NavBarData.findIndex(
+    (item) => currentPath.startsWith(item.path),
+  );
+  // If the path is one of the specific paths, set the selected menu item to 2
+  if (currentPath.startsWith("/models") && previousLocation?.pathname.startsWith("/profile")) {
+    setSelectedMenuItem(2);
+  } else {
     setSelectedMenuItem(currentMenuItem);
-  }, [location]);
+  }
+}, [location]);
 
   return (
     <div>

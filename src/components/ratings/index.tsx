@@ -15,7 +15,7 @@ const RatingsSection = ({ modelId }: Props) => {
     useAxios({
       axiosInstance: UserDashboardAI,
       method: "get",
-      url: "/rating/ratings-by-model_id/" + modelId,
+      url: "/rating/model_id/" + modelId,
       requestConfig: {
         headers: {
           Authorization: `Bearer ${auth?.token}`,

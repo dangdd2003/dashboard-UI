@@ -1,16 +1,16 @@
+import UserDashboardAI from "@/apis/UserDashboardAI";
+import Container from "@/components/container";
+import NewRatingBox from "@/components/editbox/rating";
+import ConfirmAlertBox from "@/components/notification/confirm";
+import RatingsSection from "@/components/ratings";
+import useAuth from "@/hooks/useAuth";
+import useAxios from "@/hooks/useAxios";
+import useAxiosFunction from "@/hooks/useAxiosFunction";
+import { IModel } from "@/interfaces/IModel.tsx";
+import { StarIcon } from "@heroicons/react/16/solid";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import Container from "@/components/container";
-import { StarIcon } from "@heroicons/react/16/solid";
-import { IModel } from "@/interfaces/IModel.tsx";
-import RatingsSection from "@/components/ratings";
-import NewRatingBox from "@/components/editbox/rating";
-import UserDashboardAI from "@/apis/UserDashboardAI";
-import useAxios from "@/hooks/useAxios";
-import useAuth from "@/hooks/useAuth";
-import useAxiosFunction from "@/hooks/useAxiosFunction";
-import ConfirmAlertBox from "@/components/notification/confirm";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 
 const ModelDetail = () => {
   const { modelId } = useParams();
@@ -73,7 +73,7 @@ const ModelDetail = () => {
     newRatingAF({
       axiosInstance: UserDashboardAI,
       method: "post",
-      url: "/rating/ratings/create?model_id=" + model.id + "&user_id=" +
+      url: "/rating/create?model_id=" + model.id + "&user_id=" +
         auth?.userId,
       requestConfig: {
         headers: {
@@ -107,7 +107,7 @@ const ModelDetail = () => {
         <ConfirmAlertBox
           title="Error"
           description="You have already rated this model"
-          onClose={() => {}}
+          onClose={() => { }}
         />
       )}
       <div className="mx-auto p-6 rounded-md mt-10 w-3/4">
@@ -185,11 +185,10 @@ const ModelDetail = () => {
               <button
                 key={stars}
                 onClick={() => handleStarClick(stars)}
-                className={`mr-1 text-white-500 hover:text-yellow-600 ${
-                  userRatingStars && userRatingStars >= stars
-                    ? "text-yellow-400"
-                    : "text-gray-300"
-                }`}
+                className={`mr-1 text-white-500 hover:text-yellow-600 ${userRatingStars && userRatingStars >= stars
+                  ? "text-yellow-400"
+                  : "text-gray-300"
+                  }`}
               >
                 <StarIcon className="w-6 h-6" />
               </button>

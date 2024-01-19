@@ -16,7 +16,7 @@ const ConfirmAlertBox: React.FC<ConfirmAlertBoxProps> = (
   }
 
   return (
-    <div className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-15 z-50">
+    <div className=" top-0 left-0 w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-15 z-50">
       <div className="border rounded-lg bg-white w-2/4 h-1/3 p-2 flex flex-col items-center justify-center">
         <h1 className="text-5xl my-2 font-bold">{title}</h1>
         <p className="text-lg">{description}</p>

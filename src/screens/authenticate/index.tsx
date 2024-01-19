@@ -19,22 +19,22 @@ const Authenticate = () => {
     <div
       className={`${
         isAboveMedium ? "flex" : "flex-col"
-      } h-screen bg-blue-900 text-white`}
+      } h-screen bg-blue-900 text-white w-screen overflow-auto`}
     >
       <div
         className={`${
           isAboveMedium ? "w-2/5" : "h-1/4"
-        } flex flex-col bg-blue-950 p-10 justify-center`}
+        } flex flex-col bg-blue-950 p-10 justify-center overflow-auto`}
       >
         <h1 className="text-5xl font-bold">MPAP</h1>
         <p className="mt-4 text-xl">A multi platform app</p>
-        <p className="text-xl">For Nitro, Photpho and Kali prediction</p>
+        <p className="text-xl">For Nitro, Phospho and Kali prediction</p>
       </div>
       {/* LOGIN AND REGISTER */}
       <div
-        className={`${isAboveMedium ? "w-3/5 h-full" : "h-6/7"} ${
-          isLogin ? "h-3/4" : ""
-        } p-10 flex flex-col items-center justify-center bg-black`}
+        className={`${isAboveMedium ? "w-3/5 h-full" : "h-full"} ${
+          isLogin ? "h-full" : "h-full"
+        } p-10 flex flex-col items-center justify-center overflow-auto bg-black`}
       >
         <div className="border-2 w-[400px] h-full flex flex-col rounded-3xl">
           <div className="flex mt-10 mb-5 text-xl font-light justify-center gap-10">

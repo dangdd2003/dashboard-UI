@@ -25,6 +25,20 @@ const Home = () => {
     },
   });
 
+  const [,,,,] = useAxios({
+    axiosInstance: UserDashboardAI,
+    method: "get",
+    url: "/file/get-avatar",
+    requestConfig: {
+      headers: {
+        Authorization: `Bearer ${auth?.token}`,
+      },
+      param: {
+        id: auth?.userId,
+      }
+    },
+  }); 
+
   useEffect(() => {
     if (response.data) {
       setAuth({

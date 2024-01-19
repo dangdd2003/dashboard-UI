@@ -118,6 +118,9 @@ const Settings: React.FC = () => {
   const [isEmailEditable, setIsEmailEditable] = useState(false);
   const [deleteUserResponse, deleteUserError, deleteUserLoading, deleteUserAF] =
     useAxiosFunction();
+  const [uploadAvatarResponse, uploadAvatarError, uploadAvatarLoading, uploadAvatarAF] =
+    useAxiosFunction();
+  
 
   const [userResponse, userError, userLoading, userRefetch] = useAxios({
     axiosInstance: UserDashboardAI,
@@ -130,13 +133,17 @@ const Settings: React.FC = () => {
     },
   });
 
+  const [avatar, setAvatar] = useState<File | null>(null);
   const [firstName, setFirstName] = useState(userResponse?.data.firstname);
   const [lastName, setLastName] = useState(userResponse?.data.lastname);
   const [email, setEmail] = useState(userResponse?.data.email);
 
+
   const originalFirstName = userResponse?.data.firstname;
   const originalLastName = userResponse?.data.lastname;
   const originalEmail = userResponse?.data.email;
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (userResponse?.data) {
@@ -160,6 +167,35 @@ const Settings: React.FC = () => {
     });
     setIsDeleteConfirmationVisible(false);
   };
+
+  const handleSubmitAvatar = () => {
+    console.log(avatar)
+    uploadAvatarAF({
+      axiosInstance: UserDashboardAI,
+      method: "post",
+      url: `/file/upload-avatar`,
+      requestConfig: {
+        headers: {
+          // Authorization: `Bearer ${auth?.token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        params: {
+          user_id: auth?.userId,
+        },
+        data: {
+          image: avatar,
+        },
+      },
+    });
+    setAvatar(null);
+    // reset the avatar input
+      // reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+
+
   //  console.log(firstName, lastName, email)
   return (
     <Container>
@@ -169,10 +205,22 @@ const Settings: React.FC = () => {
           isBelowSm && "w-1/2"
         }`}
       >
-        {
-          /* {(firstName && lastName && email) !== undefined && (
-          <div> */
-        }
+        <div className="my-5">
+          <label htmlFor="avatar" className="block text-lg font-medium text-gray-700 mb-2">Avatar</label>
+          <input
+            type="file"
+            ref={fileInputRef}
+            name="avatar"
+            id="avatar"
+            accept="image/*"
+            className="border-2 rounded-lg p-2 hover:bg-gray-900 hover:text-white"
+            onChange={(e) => setAvatar(e.target.files![0])}
+          />
+          {avatar && (
+            <button onClick={handleSubmitAvatar} className="ml-5 my-4 px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">Submit</button>
+          )}
+        </div>
+        
         {/* Editable first name */}
         <EditableField
           label="First Name"
