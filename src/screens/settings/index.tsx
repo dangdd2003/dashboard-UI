@@ -21,31 +21,31 @@ const DeleteConfirmationPopup: React.FC<
   onConfirm,
   onCancel,
 }) => {
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-4 rounded-md shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Confirm Account Deletion</h2>
-        <p className="text-gray-600 mb-4">
-          Are you sure you want to delete your account?
-        </p>
-        <div className="flex justify-center">
-          <button
-            className="bg-red-500 text-white px-4 py-2 rounded-md mr-2 hover:bg-red-600"
-            onClick={onConfirm}
-          >
-            Yes, Delete Account
-          </button>
-          <button
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white p-4 rounded-md shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Confirm Account Deletion</h2>
+          <p className="text-gray-600 mb-4">
+            Are you sure you want to delete your account?
+          </p>
+          <div className="flex justify-center">
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded-md mr-2 hover:bg-red-600"
+              onClick={onConfirm}
+            >
+              Yes, Delete Account
+            </button>
+            <button
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 const EditableField = (
   { label, value, setValue, originalValue, isEditable, setIsEditable }:
@@ -112,6 +112,7 @@ const Settings: React.FC = () => {
   const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] =
     useState(false);
   const isBelowSm = useMediaQuery({ query: "(max-width: 640px)" });
+  const isAboveMedium = useMediaQuery({ minWidth: 768 });
 
   const [isFirstNameEditable, setIsFirstNameEditable] = useState(false);
   const [isLastNameEditable, setIsLastNameEditable] = useState(false);
@@ -120,7 +121,7 @@ const Settings: React.FC = () => {
     useAxiosFunction();
   const [uploadAvatarResponse, uploadAvatarError, uploadAvatarLoading, uploadAvatarAF] =
     useAxiosFunction();
-  
+
 
   const [userResponse, userError, userLoading, userRefetch] = useAxios({
     axiosInstance: UserDashboardAI,
@@ -189,7 +190,7 @@ const Settings: React.FC = () => {
     });
     setAvatar(null);
     // reset the avatar input
-      // reset the file input
+    // reset the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -199,11 +200,10 @@ const Settings: React.FC = () => {
   //  console.log(firstName, lastName, email)
   return (
     <Container>
-      <h1 className="text-5xl font-bold mb-8">Settings</h1>
+      <h1 className={`flex justify-center font-bold ${isAboveMedium ? "text-5xl" : "text-3xl mt-20"}`}>Settings</h1>
       <div
-        className={`sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-1/2 ${
-          isBelowSm && "w-1/2"
-        }`}
+        className={`sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-1/2 ${isBelowSm && "w-full px-10"
+          }`}
       >
         <div className="my-5">
           <label htmlFor="avatar" className="block text-lg font-medium text-gray-700 mb-2">Avatar</label>
@@ -220,7 +220,7 @@ const Settings: React.FC = () => {
             <button onClick={handleSubmitAvatar} className="ml-5 my-4 px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">Submit</button>
           )}
         </div>
-        
+
         {/* Editable first name */}
         <EditableField
           label="First Name"

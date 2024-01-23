@@ -16,16 +16,15 @@ const Container = ({ children }: LayoutProps) => {
           <Navbar />
         </div>
         <div className="pt-2 z-20">
-            <div className="absolute w-auto px-4 right-0">
-              <Sidebar />
+          <div className="absolute w-auto px-4 right-0">
+            <Sidebar />
           </div>
         </div>
       </div>
 
       <div
-        className={`flex flex-col justify-center items-center ${
-          isAboveMedium ? "ml-32" : "ml-0"
-        } mt-2`}
+        className={`flex flex-col justify-center items-center ${isAboveMedium ? "" : "ml-0"
+          } mt-2`}
       >
         {children}
       </div>

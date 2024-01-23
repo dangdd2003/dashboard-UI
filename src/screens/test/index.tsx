@@ -16,7 +16,7 @@ const Test = () => {
   const { modelId, resourceId } = useParams();
   const { auth } = useAuth();
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
-
+  const isBelowSm = useMediaQuery({ maxWidth: 500 });
   const [selectedModelType, setSelectedModelType] = useState<string>("");
   const [selectedResourceType, setSelectedResourceType] = useState<string>("DataFiles");
   const [selectedInferenceType, setSelectedInferenceType] = useState<string>("");
@@ -289,15 +289,14 @@ const Test = () => {
           onClose={() => setModelMissing(false)}
         />
       )}
-      <h1 className="text-5xl font-bold">Tests</h1>
-      <div className={`flex mt-8 px-10 gap-10 w-full h-full `}>
+      <h1 className={`flex justify-center font-bold text-5xl ${isAboveMedium ? "" : "mt-20"}`}>Tests</h1>
+      <div className={`flex mt-8 gap-10 w-full h-full 2xl:px-32 xl:px-28 lg:px-28 md:px-24 sm:px-18 ${isAboveMedium ? "px-32" : "px-10"}`}>
         <div
-          className={`xl:w-5/6 md:w-4/6 max-sm:w-2/3  ${isAboveMedium ? "xl:flex" : "w-2/3"
-            }`}
+          className={`xl:w-5/6 md:w-4/6  ${isAboveMedium ? "xl:flex" : "w-2/3"}  ${isBelowSm && "w-full"}`}
         >
-          <div className="xl:flex">
-            <div>
-              <div className="border xl:px-5">
+          <div className="xl:flex w-full">
+            <div className="w-full">
+              <div className="border xl:px-5 flex flex-col items-center">
                 <h1 className="text-3xl flex justify-center my-4">Model</h1>
                 <div className="ml-6">
                   <div>
@@ -305,7 +304,7 @@ const Test = () => {
                     <div className="ml-6">
                       <div className="flex items-center gap-5">
                         <select
-                          className="p-2 border-2 rounded-lg "
+                          className="p-2 border-2 rounded-lg w-36"
                           value={selectedModelType}
                           onChange={(event) => {
                             setSelectedModelType(event.target.value);
@@ -313,7 +312,7 @@ const Test = () => {
                         >
                           <option value="">none</option>
                           {ModelTypes.map((item, index) => (
-                            <option key={index} value={item}>
+                            <option className="w-32" key={index} value={item}>
                               {item}
                             </option>
                           ))}
@@ -333,7 +332,7 @@ const Test = () => {
                       <div className="flex">
                         <div className="flex items-center gap-5">
                           <select
-                            className="p-2 border-2 rounded-lg"
+                            className="p-2 border-2 rounded-lg w-36"
                             value={selectedModelId}
                             onChange={(event) => {
                               setSelectedModelId(event.target.value);
@@ -382,7 +381,7 @@ const Test = () => {
                   </div>
                 </div>
               </div>
-              <div className="xl:px-5 border">
+              <div className="xl:px-5 border flex flex-col items-center">
                 <h1 className="text-3xl flex justify-center my-4">Train</h1>
                 <div className="ml-6">
                   <div className="mb-4">
@@ -391,7 +390,7 @@ const Test = () => {
                       <div className="flex">
                         <div className="flex items-center gap-5">
                           <select
-                            className="p-2 border-2 rounded-lg"
+                            className="p-2 border-2 rounded-lg w-36"
                             value={selectedResourceId}
                             onChange={(event) => {
                               setSelectedResourceId(event.target.value);
@@ -474,7 +473,7 @@ const Test = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full border">
+            <div className="w-full border flex flex-col items-center">
               <div className="mt-4 xl:px-20 w-full">
                 <h1 className="text-3xl flex justify-center mb-4">Infer</h1>
                 <div className="ml-6">
@@ -483,7 +482,7 @@ const Test = () => {
                     <div className="ml-6">
                       <div className="flex items-center gap-5">
                         <select
-                          className="p-2 border-2 rounded-lg "
+                          className="p-2 border-2 rounded-lg w-36"
                           value={selectedInferenceType}
                           onChange={(event) => {
                             setSelectedInferenceType(event.target.value);
@@ -510,7 +509,7 @@ const Test = () => {
                     <div className="ml-6">
                       <input
                         id="inference-file"
-                        className="border-2 rounded-lg p-2 hover:bg-gray-900 hover:text-white"
+                        className="border-2 rounded-lg p-2 hover:bg-gray-900 hover:text-white w-36"
                         type="file"
                         onChange={onSelectFile}
                       />
@@ -522,7 +521,7 @@ const Test = () => {
                     <div className="ml-6">
                       <input
                         id="inference-pca-dimension"
-                        className="border-2 rounded-lg p-2"
+                        className="border-2 rounded-lg p-2 w-36"
                         type="number"
                         onChange={(event) => setPcaDimension(parseInt(event.target.value))}
                       />
@@ -567,7 +566,7 @@ const Test = () => {
         </div>
         <div
           className={`xl:w-1/6 md:w-2/6 max-sm:w-1/3 border-2 p-4 ${isAboveMedium ? "" : "w-1/3"
-            }`}
+            }  ${isBelowSm && "hidden"}`}
         >
           <div className="flex">
             <div className="flex flex-col gap-5 h-full">

@@ -49,7 +49,7 @@ const Sidebar = () => {
       {isMenuToggle && (
         <div
           ref={ref}
-          className="absolute top-0 right-0 w-96 h-screen border rounded-lg bg-white"
+          className="absolute top-0 right-0 w-72 h-screen border rounded-lg bg-white"
         >
           <div className="w-full">
             <div className="flex items-center my-3 gap-5">

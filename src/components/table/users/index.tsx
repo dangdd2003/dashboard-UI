@@ -302,22 +302,20 @@ const TableUsers = () => {
         <button
           disabled={!table.getCanPreviousPage()}
           onClick={() => table.previousPage()}
-          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${
-            !table.getCanPreviousPage()
+          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
               ? "disabled:opacity-50"
               : "hover:bg-gray-300"
-          }`}
+            }`}
         >
           Previous Page
         </button>
         <button
           disabled={!table.getCanNextPage()}
           onClick={() => table.nextPage()}
-          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${
-            !table.getCanNextPage()
+          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
               ? "disabled:opacity-50"
               : "hover:bg-gray-300"
-          }`}
+            }`}
         >
           Next Page
         </button>

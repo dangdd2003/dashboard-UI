@@ -18,7 +18,6 @@ import useAxios from "@/hooks/useAxios";
 
 const Explorer = () => {
   const { auth } = useAuth();
-  const [isModelCardLarge, setIsModelCardLarge] = useState(false);
   const [sortOrder, setSortOrder] = useState(0); // 1 for ascending, -1 for descending\
   const [typeFilter, setTypeFilter] = useState("");
   const [isTypeFilterDropdownOpen, setIsTypeFilterDropdownOpen] = useState(
@@ -124,9 +123,9 @@ const Explorer = () => {
 
   return (
     <Container>
-      <h1 className="text-5xl font-bold">Explorer</h1>
+      <h1 className={`flex justify-center font-bold text-5xl ${isAboveMedium ? "" : "mt-20"}`}>Explorer</h1>
       <div
-        className={`flex flex-col items-center justify-center gap-5 mt-2 sticky top-0 z-20 shadow-lg bg-white opacity-95 w-screen p-2`}
+        className={`flex flex-col items-center justify-center gap-5 mt-2 sticky top-0 z-20 shadow-lg bg-white opacity-95 w-screen p-2 `}
       >
         <div className="p-2 mx-auto my-auto border-2 rounded-full w-1/2">
           <div className="relative flex items-center w-full h-12 rounded-full focus-within:shadow-lg bg-white overflow-hidden">
@@ -134,7 +133,7 @@ const Explorer = () => {
               <MagnifyingGlassIcon className="h-6 w-6" />
             </div>
             <input
-              className="peer h-full w-full outline-none text-lg text-gray-700 pr-2"
+              className={`peer h-full w-full outline-none text-lg text-gray-700 pr-2  ${isAboveMedium ? "text-lg" : "text-sm "}`}
               type="text"
               id="search"
               placeholder="Search something.."
@@ -144,17 +143,16 @@ const Explorer = () => {
         </div>
         <div className="flex gap-5">
           <button
-            className={`flex w-24 h-auto p-3 border-2 rounded-lg gap-4 hover:bg-gray-100 bg-white ${
-              sortOrder ? "bg-gray-200" : "hover:bg-gray-100"
-            }`}
+            className={`flex w-24 h-auto p-3 border-2 rounded-lg gap-4 hover:bg-gray-100 bg-white ${sortOrder ? "bg-gray-200" : "hover:bg-gray-100"
+              }`}
             onClick={handleStarsSort}
           >
             <p>Stars</p>
             {sortOrder === 1
               ? <ChevronUpIcon className="w-4 h-4 mt-1" />
               : sortOrder === -1
-              ? <ChevronDownIcon className="w-4 h-4 mt-1" />
-              : <ChevronUpDownIcon className="w-4 h-4 mt-1" />}
+                ? <ChevronDownIcon className="w-4 h-4 mt-1" />
+                : <ChevronUpDownIcon className="w-4 h-4 mt-1" />}
           </button>
           <div className="relative">
             <button
@@ -221,7 +219,7 @@ const Explorer = () => {
           </div>
         </div>
       </div>
-      <div className="mt-8 mx-16 w-full">
+      <div className="mt-8 w-full xl:pl-28 lg:pl-28 md:pl-20">
         <div className="flex flex-wrap justify-center items-center">
           {models.length === 0
             ? (

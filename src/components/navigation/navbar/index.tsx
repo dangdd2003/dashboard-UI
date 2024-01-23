@@ -36,11 +36,11 @@ const Navbar = React.memo(() => {
     ref: React.RefObject<HTMLDivElement>,
     setState: React.Dispatch<React.SetStateAction<boolean>>,
   ) =>
-  (event: MouseEvent) => {
-    if (ref.current && !ref.current.contains(event.target as Node)) {
-      setState(false);
-    }
-  };
+    (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setState(false);
+      }
+    };
 
   useEffect(() => {
     const clickOutsidePopup = handleClickOutside(popupRef, setIsAddMenuVisible);
@@ -56,21 +56,21 @@ const Navbar = React.memo(() => {
   }, []);
 
   useEffect(() => {
-  setPreviousLocation(location);
-}, [location]);
+    setPreviousLocation(location);
+  }, [location]);
 
   useEffect(() => {
-  const currentPath = location.pathname;
-  const currentMenuItem = NavBarData.findIndex(
-    (item) => currentPath.startsWith(item.path),
-  );
-  // If the path is one of the specific paths, set the selected menu item to 2
-  if (currentPath.startsWith("/models") && previousLocation?.pathname.startsWith("/profile")) {
-    setSelectedMenuItem(2);
-  } else {
-    setSelectedMenuItem(currentMenuItem);
-  }
-}, [location]);
+    const currentPath = location.pathname;
+    const currentMenuItem = NavBarData.findIndex(
+      (item) => currentPath.startsWith(item.path),
+    );
+    // If the path is one of the specific paths, set the selected menu item to 2
+    if (currentPath.startsWith("/models") && previousLocation?.pathname.startsWith("/profile")) {
+      setSelectedMenuItem(2);
+    } else {
+      setSelectedMenuItem(currentMenuItem);
+    }
+  }, [location]);
 
   return (
     <div>
@@ -90,9 +90,8 @@ const Navbar = React.memo(() => {
           {isAboveMedium || isMenuToggle
             ? (
               <div
-                className={` ${
-                  isMenuToggle ? "w-64" : "w-20"
-                } flex flex-col p-2 h-full bg-white border-r shadow-sm ease-in-out`}
+                className={` ${isMenuToggle ? "w-64" : "w-20"
+                  } flex flex-col p-2 h-full bg-white border-r shadow-sm ease-in-out`}
               >
                 {/* TOGGLE AND LOGO */}
                 <div className={`${flexBetween} w-64 p-2`}>
@@ -109,9 +108,8 @@ const Navbar = React.memo(() => {
                 </div>
                 {/* ADD BUTTON */}
                 <div
-                  className={`${flexBetween} ${
-                    isMenuToggle ? "w-32" : "w-16"
-                  } mb-3 p-2 border rounded-full bg-grey-50 hover:bg-gray-100 relative`} // Add relative here
+                  className={`${flexBetween} ${isMenuToggle ? "w-32" : "w-16"
+                    } mb-3 p-2 border rounded-full bg-grey-50 hover:bg-gray-100 relative`} // Add relative here
                   onClick={() => setIsAddMenuVisible(!isAddMenuVisible)}
                   ref={popupRef}
                 >
@@ -174,20 +172,18 @@ const Navbar = React.memo(() => {
                         }}
                       >
                         <li
-                          className={`${
-                            selectedMenuItem === index
-                              ? "bg-gray-100 border-r-4 border-r-indigo-500"
-                              : "hover:bg-gray-100"
-                          } h-16 flex justify-start items-center hover:bg-gray-100 cursor-pointer duration-75"`}
+                          className={`${selectedMenuItem === index
+                            ? "bg-gray-100 border-r-4 border-r-indigo-500"
+                            : "hover:bg-gray-100"
+                            } h-16 flex justify-start items-center hover:bg-gray-100 cursor-pointer duration-75"`}
                         >
                           <div className="flex justify-start items-center">
                             <div className="ml-4">
                               <item.icon className="h-7 w-7 mr-2" />
                             </div>
                             <div
-                              className={`${
-                                isMenuToggle ? "ml-4" : "ml-0"
-                              } text-md`}
+                              className={`${isMenuToggle ? "ml-4" : "ml-0"
+                                } text-md`}
                             >
                               {isMenuToggle ? item.title : ""}
                             </div>
