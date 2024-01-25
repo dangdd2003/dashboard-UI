@@ -5,6 +5,7 @@ import {
   ChevronUpDownIcon,
   ChevronUpIcon,
   MagnifyingGlassIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { IModel } from "@/interfaces/IModel";
@@ -50,26 +51,34 @@ const Explorer = () => {
     }
   }, [modelsResponse]);
 
-  // Effect to filter models based on search input
+    // Effect to filter models based on search input
   useEffect(() => {
     if (searchInput === "") {
       setModels(originalModels);
     } else {
-      const filteredModels = originalModels.filter((model) =>
-        model.name.toLowerCase().includes(searchInput.toLowerCase())
-      );
+      const normalizedSearchInput = searchInput.replace(/\s/g, '').toLowerCase().trim();
+
+      const filteredModels = originalModels.filter((model) => {
+        const normalizedModelName = model.name.replace(/\s/g, '').toLowerCase().trim();
+        return normalizedModelName.includes(normalizedSearchInput);
+      });
+
       setModels(filteredModels);
     }
   }, [searchInput, originalModels]);
 
-  // Effect to filter models based on selected type
+  // Effect to filter models based on type filter
   useEffect(() => {
     if (typeFilter === "") {
       setModels(originalModels);
     } else {
-      const filteredModels = originalModels.filter((model) =>
-        model.type === typeFilter
-      );
+      const normalizedTypeFilter = typeFilter.replace(/\s/g, '').toLowerCase().trim();
+
+      const filteredModels = originalModels.filter((model) => {
+        const normalizedModelType = model.type.replace(/\s/g, '').toLowerCase().trim();
+        return normalizedModelType.includes(normalizedTypeFilter);
+      });
+
       setModels(filteredModels);
     }
   }, [typeFilter, originalModels]);
@@ -123,7 +132,7 @@ const Explorer = () => {
 
   return (
     <Container>
-      <h1 className={`flex justify-center font-bold text-5xl ${isAboveMedium ? "" : "mt-20"}`}>Explorer</h1>
+      <h1 className={`flex justify-center font-bold text-5xl `}>Explorer</h1>
       <div
         className={`flex flex-col items-center justify-center gap-5 mt-2 sticky top-0 z-20 shadow-lg bg-white opacity-95 w-screen p-2 `}
       >
@@ -158,13 +167,21 @@ const Explorer = () => {
             <button
               className="flex w-auto h-auto p-3 border-2 rounded-lg gap-2 hover:bg-gray-100 bg-white"
               onClick={() =>
-                setIsTypeFilterDropdownOpen(!isTypeFilterDropdownOpen)}
+                typeFilter === "" && setIsTypeFilterDropdownOpen(!isTypeFilterDropdownOpen)
+              }
               id="menu-button"
               aria-expanded="true"
               aria-haspopup="true"
             >
-              <p>Type</p>
-              <ChevronDownIcon className="w-4 h-4 mt-1" />
+              
+              {typeFilter !== ""
+                  ? <div className="flex gap-2" onClick={() => setTypeFilter("")}><p>{typeFilter}</p>
+                  <XMarkIcon className="w-4 h-4 mt-1" />
+                </div>
+                : <div className="flex gap-2">
+                  <p>Type</p>
+                  <ChevronDownIcon className="w-4 h-4 mt-1" />
+                </div>}
             </button>
             {isTypeFilterDropdownOpen && (
               <div

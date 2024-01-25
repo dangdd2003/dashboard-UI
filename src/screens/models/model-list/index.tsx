@@ -15,6 +15,7 @@ import useAuth from "@/hooks/useAuth";
 import Model from "@/components/models/model";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import ConfirmAlertBox from "@/components/notification/confirm";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 type Props = {
   userID: number;
@@ -29,10 +30,13 @@ const Models = ({ userID }: Props) => {
   const [modelsResponse, modelsError, modelsLoading, modelsRefetch] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/models/models-by-user/" + userID,
+    url: "/models/models-by-user/",
     requestConfig: {
       headers: {
         Authorization: `Bearer ${auth?.token}`,
+      },
+      params: {
+        user_id: userID,
       },
     },
   });
@@ -73,25 +77,32 @@ const Models = ({ userID }: Props) => {
     if (searchInput === "") {
       setModels(originalModels);
     } else {
-      const filteredModels = originalModels.filter((model) =>
-        model.name.toLowerCase().includes(searchInput.toLowerCase())
-      );
+      const normalizedSearchInput = searchInput.replace(/\s/g, '').toLowerCase().trim();
+
+      const filteredModels = originalModels.filter((model) => {
+        const normalizedModelName = model.name.replace(/\s/g, '').toLowerCase().trim();
+        return normalizedModelName.includes(normalizedSearchInput);
+      });
+
       setModels(filteredModels);
     }
   }, [searchInput, originalModels]);
 
+  // Effect to filter models based on type filter
   useEffect(() => {
     if (typeFilter === "") {
       setModels(originalModels);
     } else {
-      const filteredModels = originalModels.filter((model) =>
-        model.type === typeFilter
-      );
+      const normalizedTypeFilter = typeFilter.replace(/\s/g, '').toLowerCase().trim();
+
+      const filteredModels = originalModels.filter((model) => {
+        const normalizedModelType = model.type.replace(/\s/g, '').toLowerCase().trim();
+        return normalizedModelType.includes(normalizedTypeFilter);
+      });
+
       setModels(filteredModels);
     }
-  }, [typeFilter, originalModels]);
-
-  // Effect to add/remove the event listener
+  }, [typeFilter, originalModels]);  // Effect to add/remove the event listener
   useEffect(() => {
     if (isTypeFilterDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -214,30 +225,38 @@ const Models = ({ userID }: Props) => {
           </div>
           <div className="flex gap-5">
             <button
-              className={`flex w-24 h-auto p-3 border-2 rounded-lg gap-4 hover:bg-gray-100 bg-white ${
-                sortOrder ? "bg-gray-200" : "hover:bg-gray-100"
-              }`}
+              className={`flex w-24 h-auto p-3 border-2 rounded-lg gap-4 hover:bg-gray-100 bg-white ${sortOrder ? "bg-gray-200" : "hover:bg-gray-100"
+                }`}
               onClick={handleStarsSort}
             >
               <p>Stars</p>
               {sortOrder === 1
                 ? <ChevronUpIcon className="w-4 h-4 mt-1" />
                 : sortOrder === -1
-                ? <ChevronDownIcon className="w-4 h-4 mt-1" />
-                : <ChevronUpDownIcon className="w-4 h-4 mt-1" />}
+                  ? <ChevronDownIcon className="w-4 h-4 mt-1" />
+                  : <ChevronUpDownIcon className="w-4 h-4 mt-1" />}
             </button>
             <div className="relative">
               <button
                 className="flex w-auto h-auto p-3 border-2 rounded-lg gap-2 hover:bg-gray-100 bg-white"
                 onClick={() =>
-                  setIsTypeFilterDropdownOpen(!isTypeFilterDropdownOpen)}
+                  typeFilter === "" && setIsTypeFilterDropdownOpen(!isTypeFilterDropdownOpen)
+                }
                 id="menu-button"
                 aria-expanded="true"
                 aria-haspopup="true"
               >
-                <p>Type</p>
-                <ChevronDownIcon className="w-4 h-4 mt-1" />
+
+                {typeFilter !== ""
+                  ? <div className="flex gap-2" onClick={() => setTypeFilter("")}><p>{typeFilter}</p>
+                    <XMarkIcon className="w-4 h-4 mt-1" />
+                  </div>
+                  : <div className="flex gap-2">
+                    <p>Type</p>
+                    <ChevronDownIcon className="w-4 h-4 mt-1" />
+                  </div>}
               </button>
+
               {isTypeFilterDropdownOpen && (
                 <div
                   ref={dropdownRef}

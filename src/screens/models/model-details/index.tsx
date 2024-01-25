@@ -6,6 +6,7 @@ import RatingsSection from "@/components/ratings";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
+import useTestId from "@/hooks/useTestId";
 import { IModel } from "@/interfaces/IModel.tsx";
 import { StarIcon } from "@heroicons/react/16/solid";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
@@ -15,6 +16,7 @@ import { Link, useParams } from "react-router-dom";
 const ModelDetail = () => {
   const { modelId } = useParams();
   const { auth } = useAuth();
+  const { ids, setIds } = useTestId();
   if (!modelId) {
     return <div className="text-red-500">MODELID not found</div>;
   }
@@ -139,9 +141,10 @@ const ModelDetail = () => {
                   aria-labelledby="options-menu"
                 >
                   <Link
-                    to={`/tests/model/${model.id}`}
+                    to={`/tests/`}
                     className="w-full block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     role="menuitem"
+                    onClick={() => setIds({ modelId: Number(modelId), resourceId: ids?.resourceId })}
                   >
                     Test
                   </Link>
