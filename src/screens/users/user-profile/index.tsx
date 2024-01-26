@@ -44,7 +44,8 @@ const UserProfile = () => {
   return (
     <Container>
       <div className="flex flex-col items-center justify-center">
-        <img src={`http://146.190.100.81:8081/file/get-avatar?id=${response?.data.id}`} alt="" className="w-60 h-60 rounded-full" />
+        {/* <img src={`http://146.190.100.81:8081/files/get-avatar?id=${response?.data.id}`} alt="" className="w-60 h-60 rounded-full" /> */}
+        <img src={`http://localhost:8081/files/get-avatar?id=${response?.data.id}`} alt="" className="w-60 h-60 rounded-full" />
         <h1 className="text-2xl font-bold my-2">{response.data.username}</h1>
         <span className="flex flex-col font-thin items-center justify-center">
           <p>Joined: {formattedCreateTime}</p>
@@ -84,7 +85,7 @@ const UserProfile = () => {
         </div>
       )}
       {selectedButton === "resources" && userId !== undefined && (
-        <div>
+        <div className={`flex gap-3 mt-10 ${isAboveMedium ? "" : " ml-0 w-5/6"}`}>
           <TableDatasets userId={userId || 0} />
         </div>
       )}

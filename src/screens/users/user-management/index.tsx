@@ -7,7 +7,7 @@ const UserManagement = () => {
   const isAboveMedium = useMediaQuery({ query: '(min-width: 768px)' });
   return (
     <Container>
-      <h1 className={`flex justify-center font-bold ${isAboveMedium ? "text-5xl" : "text-3xl mt-20"}`}>User Management</h1>
+      <h1 className={`flex justify-center font-bold ${isAboveMedium ? "text-5xl" : "text-3xl"}`}>User Management</h1>
       <div className={`flex gap-3 mt-10 ${isAboveMedium ? "" : " ml-0 w-5/6"}`}>
         <TableUsers />
       </div>

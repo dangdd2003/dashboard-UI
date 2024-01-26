@@ -1,5 +1,4 @@
 import Explorer from "./screens/explorer/index.tsx";
-import Models from "./screens/models/model-list/index.tsx";
 import Test from "./screens/test/index.tsx";
 import Datasets from "./screens/datasets/index.tsx";
 import Home from "./screens/home/index.tsx";

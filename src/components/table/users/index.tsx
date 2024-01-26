@@ -85,6 +85,9 @@ const TableUsers = () => {
     {
       header: "Created At",
       accessorKey: "createTime",
+      cell: ({ row }: any) => (
+        <div>{formattedCreateTime(row.original.createTime)}</div>
+      ),
     },
     {
       header: "Actions",
@@ -164,6 +167,17 @@ const TableUsers = () => {
       });
     }
   };
+
+  const formattedCreateTime = (createTime: string) => {
+    return new Date(createTime).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  }
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [filtering, setFiltering] = useState("");

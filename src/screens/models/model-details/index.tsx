@@ -75,8 +75,7 @@ const ModelDetail = () => {
     newRatingAF({
       axiosInstance: UserDashboardAI,
       method: "post",
-      url: "/rating/create?model_id=" + model.id + "&user_id=" +
-        auth?.userId,
+      url: "/ratings/create",
       requestConfig: {
         headers: {
           Authorization: `Bearer ${auth?.token}`,
@@ -85,6 +84,10 @@ const ModelDetail = () => {
           modelId: model.id,
           stars: userRatingStars,
           comment: userComment,
+        },
+        params: {
+          model_id: model.id,
+          user_id: auth?.userId,
         },
       },
     });

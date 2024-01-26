@@ -13,6 +13,7 @@ type Props = {
 const DatasetSubmissionBox = (props: Props) => {
   const { auth } = useAuth();
   const { setIsNewModelWindowVisible } = props;
+  const [isExit, setIsExit] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState("")
   const [fileSubRes, fileSubErr, fileSubLoading, fileSubAF] =
@@ -62,6 +63,9 @@ const DatasetSubmissionBox = (props: Props) => {
       {fileSubErr && (
         <ConfirmAlertBox title="Resource Submission Failed" description={`Your resource submission has failed: ${fileSubErr}`} onClose={() => setIsNewModelWindowVisible(false)} />
       )}
+      {isExit && (
+        <ConfirmAlertBox title="Exit" description="Are you sure you want to exit?" onClose={() => setIsNewModelWindowVisible(false)} />
+      )}
 
       <div
         className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 z-40"
@@ -75,11 +79,7 @@ const DatasetSubmissionBox = (props: Props) => {
             <XMarkIcon
               className="w-8 h-8 float-right m-2 cursor-pointer hover:bg-gray-300 rounded-full p-"
               onClick={() => {
-                if (
-                  window.confirm("Are you sure you want to close the window?")
-                ) {
-                  setIsNewModelWindowVisible(false);
-                }
+                setIsExit(true);
               }}
             />
             <h1 className="text-2xl font-bold text-center p-2">Upload Resource</h1>

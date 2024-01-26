@@ -3,6 +3,7 @@ import ConfirmAlertBox from "@/components/notification/confirm";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
+import useTestId from "@/hooks/useTestId";
 import { IDataset } from "@/interfaces/IDataset";
 
 import {
@@ -40,6 +41,7 @@ type Column = {
 
 const TableDatasets = ({ userId }: Props) => {
   const { auth } = useAuth();
+  const { ids, setIds } = useTestId();
   const [deleteUserResponse, deleteUserError, deleteUserLoading, deleteUserAF] =
     useAxiosFunction();
   const [showAlert, setShowAlert] = useState(false);
@@ -47,15 +49,18 @@ const TableDatasets = ({ userId }: Props) => {
   const [datasetsResponse, datasetsError, userLoading, userRefetch] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/resources/user_id/" + userId,
+    url: "/resources/user_id/",
     requestConfig: {
       headers: {
         Authorization: `Bearer ${auth?.token}`,
       },
+      params: {
+        user_id: userId,
+      },
     },
   });
 
-  console.log(datasetsResponse);
+  const [deleteResponse, deleteError, deleteLoading, deleteAF] = useAxiosFunction();
 
   const [data, setData] = useState<IDataset[]>(datasetsResponse?.data);
 
@@ -86,13 +91,23 @@ const TableDatasets = ({ userId }: Props) => {
     //   header: "Last Name",
     //   accessorKey: "lastname",
     // },
-    // {
-    //   header: "Filepath",
-    //   accessorKey: "filepath",
-    // },
+    {
+      header: "Filepath",
+      accessorKey: "filepath",
+      cell: ({ row }: any) => (
+        <div>
+          {row.original.filepath ? formatFilePath(row.original.filepath) : ''}
+        </div>
+      ),
+    },
     {
       header: "Created At",
       accessorKey: "createTime",
+      cell: ({ row }: any) => (
+        <div>
+          {formattedCreateTime(row.original.createTime)}
+        </div>
+      ),
     },
   ];
 
@@ -100,7 +115,7 @@ const TableDatasets = ({ userId }: Props) => {
     header: "Actions",
     accessorKey: "actions",
     cell: ({ row }: any) => (
-      <div className="flex gap-1">
+      <div className="ml-2 flex gap-1">
         {auth?.userId == userId.toString() && (
           <div className="flex gap-1">
             <button
@@ -118,7 +133,7 @@ const TableDatasets = ({ userId }: Props) => {
             </button>
           </div>
         )}
-        <Link to={`/tests/resource/${row.original.id}`}>
+        <Link to={`/tests`} onClick={() => setIds({ modelId: ids?.modelId, resourceId: row.original.id })}>
           <button
             title="Test"
             className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
@@ -135,6 +150,24 @@ const TableDatasets = ({ userId }: Props) => {
       </div>
     ),
   });
+
+  const formatFilePath = (filepath: string) => {
+    const parts = filepath.split('/');
+    const filename = parts[parts.length - 1];
+    return filename.replace('.json', '.js');
+  }
+
+  const formattedCreateTime = (createTime: string) => {
+    return new Date(createTime).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  }
+
   const handleDelete = (row: any) => {
     // Set the row to be deleted and show the alert
     setRowToDelete(row);
@@ -144,12 +177,11 @@ const TableDatasets = ({ userId }: Props) => {
   const handleAlertClose = (value: boolean) => {
     // If the value is true, proceed with the deletion
     if (value && rowToDelete) {
-      console.log(rowToDelete.original.username);
       setData(data.filter((item: any) => item.id !== rowToDelete.original.id));
-      deleteUserAF({
+      deleteAF({
         axiosInstance: UserDashboardAI,
         method: "delete",
-        url: `/users/delete?username=${rowToDelete.original.username}`,
+        url: `/resources/delete/${rowToDelete.original.id}`,
         requestConfig: {
           headers: {
             Authorization: `Bearer ${auth?.token}`,
@@ -187,12 +219,12 @@ const TableDatasets = ({ userId }: Props) => {
   });
 
   return (
-    <div className="">
+    <div className="xl:ml-0 lg:ml-36 md:ml-60 w-full">
       {showAlert &&
         (
           <ConfirmAlertBox
-            title="Delete User"
-            description="Are you sure you want to delete this user?"
+            title="Delete Resource"
+            description="Are you sure you want to delete this resource?"
             onClose={handleAlertClose}
           />
         )}
@@ -212,81 +244,60 @@ const TableDatasets = ({ userId }: Props) => {
           Filter
         </label>
       </div>
-      {data && Object.keys(data).length !== 0 && (
-        <div>
-          <div className="overflow-x-scroll">
-            <table className="w-full table-auto text-center">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        onClick={header.column.getToggleSortingHandler()}
-                        className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-5 active:bg-gray-300 focus:bg-gray-300 hover:bg-gray-300"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : (
-                            <div className="flex items-center justify-center gap-2">
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                              {header.column.getIsSorted() === false && (
-                                <ArrowsUpDownIcon className="h-5 w-5" />
-                              )}
-                              {header.column.getIsSorted() === "asc" && (
-                                <ArrowLongUpIcon className="h-5 w-5" />
-                              )}
-                              {header.column.getIsSorted() === "desc" && (
-                                <ArrowLongDownIcon className="h-5 w-5" />
-                              )}
-                            </div>
-                          )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="p-2 border-b border-blue-gray-50"
+      <div className="overflow-x-scroll">
+        <table className="w-full table-auto text-center">
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-5 active:bg-gray-300 focus:bg-gray-300 hover:bg-gray-300"
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className="p-1"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    ))}
-                  </tr>
+                    {header.isPlaceholder
+                      ? null
+                      : (
+                        <div className="flex items-center justify-center gap-2">
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          {header.column.getIsSorted() === false && (
+                            <ArrowsUpDownIcon className="h-5 w-5" />
+                          )}
+                          {header.column.getIsSorted() === "asc" && (
+                            <ArrowLongUpIcon className="h-5 w-5" />
+                          )}
+                          {header.column.getIsSorted() === "desc" && (
+                            <ArrowLongDownIcon className="h-5 w-5" />
+                          )}
+                        </div>
+                      )}
+                  </th>
                 ))}
-              </tbody>
-              {
-                /* <tfoot>
-        {table.getFooterGroups().map((footerGroup) => (
-          <tr key={footerGroup.id}>
-            {footerGroup.headers.map((header) => (
-              <th key={header.id}>
-                {header.isPlaceholder ? null : flexRender(
-                  header.column.columnDef.header,
-                  header.getContext()
-                )}
-              </th>
+              </tr>
             ))}
-          </tr>
-        ))}
-      </tfoot> */
-              }
-            </table>
-          </div>
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.id}
+                className="p-2 border-b border-blue-gray-50"
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="p-1"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
           <div className="flex gap-5 mb-4">
             <button
               className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
@@ -322,8 +333,6 @@ const TableDatasets = ({ userId }: Props) => {
             </button>
           </div>
         </div>
-      )}
-    </div>
   );
 };
 

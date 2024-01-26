@@ -2,7 +2,6 @@ import UserDashboardAI from "@/apis/UserDashboardAI";
 import ConfirmAlertBox from "@/components/notification/confirm";
 import useAuth from "@/hooks/useAuth";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
-import { ModelTypes } from "@/screens/test/ModelTypes";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
 
@@ -13,6 +12,7 @@ type Props = {
 const ModelSubmissionBox = (props: Props) => {
   const { auth } = useAuth();
   const { setIsNewModelWindowVisible } = props;
+  const [isExit, setIsExit] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileTitle] = useState<string>("");
   const [fileDescription, setFileDescription] = useState<string>("");
@@ -73,6 +73,9 @@ const ModelSubmissionBox = (props: Props) => {
       {fileSubErr && (
         <ConfirmAlertBox title="Resource Submission Failed" description={`Your resource submission has failed: ${fileSubErr}`} onClose={() => setIsNewModelWindowVisible(false)} />
       )}
+      {isExit && (
+        <ConfirmAlertBox title="Exit" description="Are you sure you want to exit?" onClose={() => setIsNewModelWindowVisible(false)} />
+      )}
 
       <div
         className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 z-40"
@@ -86,11 +89,7 @@ const ModelSubmissionBox = (props: Props) => {
             <XMarkIcon
               className="w-6 h-6 float-right m-2 cursor-pointer"
               onClick={() => {
-                if (
-                  window.confirm("Are you sure you want to close the window?")
-                ) {
-                  setIsNewModelWindowVisible(false);
-                }
+                setIsExit(true);
               }}
             />
             <h1 className="text-2xl font-bold text-center p-2">Upload Model</h1>

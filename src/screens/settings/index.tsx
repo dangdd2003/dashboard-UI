@@ -174,7 +174,7 @@ const Settings: React.FC = () => {
     uploadAvatarAF({
       axiosInstance: UserDashboardAI,
       method: "post",
-      url: `/file/upload-avatar`,
+      url: `/files/upload-avatar`,
       requestConfig: {
         headers: {
           // Authorization: `Bearer ${auth?.token}`,

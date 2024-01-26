@@ -36,7 +36,7 @@ const Home = () => {
   return (
     <Container>
       <div>
-        <h1 className={`flex justify-center font-bold ${isAboveMedium ? "text-5xl" : "text-3xl mt-20"}`}>
+        <h1 className={`flex justify-center font-bold ${isAboveMedium ? "text-5xl" : "text-3xl "}`}>
           Welcome, {auth?.userName}
         </h1>
         <div className="flex justify-center gap-3 mt-10">
