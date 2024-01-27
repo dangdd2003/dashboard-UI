@@ -33,6 +33,17 @@ const Home = () => {
     }
   }, [response]);
 
+  useEffect(() => {
+    if (error == "Request failed with status code 401") {
+      setAuth({
+        token: "",
+        userName: "",
+        role: "",
+        userId: "",
+      });
+    }
+  }, [error]);
+
   return (
     <Container>
       <div>

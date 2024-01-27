@@ -42,9 +42,8 @@ type Column = {
 const TableDatasets = ({ userId }: Props) => {
   const { auth } = useAuth();
   const { ids, setIds } = useTestId();
-  const [deleteUserResponse, deleteUserError, deleteUserLoading, deleteUserAF] =
-    useAxiosFunction();
-  const [showAlert, setShowAlert] = useState(false);
+  useAxiosFunction();
+  const [showAlert, setShowAlert] = useState<number>();
   const [rowToDelete, setRowToDelete] = useState<Row<any> | null>(null);
   const [datasetsResponse, datasetsError, userLoading, userRefetch] = useAxios({
     axiosInstance: UserDashboardAI,
@@ -171,7 +170,7 @@ const TableDatasets = ({ userId }: Props) => {
   const handleDelete = (row: any) => {
     // Set the row to be deleted and show the alert
     setRowToDelete(row);
-    setShowAlert(true);
+    setShowAlert(1);
   };
 
   const handleAlertClose = (value: boolean) => {
@@ -189,9 +188,8 @@ const TableDatasets = ({ userId }: Props) => {
         },
       });
     }
-
     // Hide the alert
-    setShowAlert(false);
+    setShowAlert(2);
   };
 
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -220,7 +218,7 @@ const TableDatasets = ({ userId }: Props) => {
 
   return (
     <div className="xl:ml-0 lg:ml-36 md:ml-60 w-full">
-      {showAlert &&
+      {showAlert == 1 &&
         (
           <ConfirmAlertBox
             title="Delete Resource"
@@ -228,6 +226,13 @@ const TableDatasets = ({ userId }: Props) => {
             onClose={handleAlertClose}
           />
         )}
+      {showAlert == 2 && deleteResponse.status == 200 && (
+        <ConfirmAlertBox
+          title="Delete Resource"
+          description="Resource deleted successfully"
+          onClose={() => setShowAlert(0)}
+        />
+      )}
       <div className="relative w-full min-w-[200px] h-10 mt-5">
         <input
           id="model-title"
@@ -298,41 +303,41 @@ const TableDatasets = ({ userId }: Props) => {
           </tbody>
         </table>
       </div>
-          <div className="flex gap-5 mb-4">
-            <button
-              className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
-              onClick={() => table.setPageIndex(0)}
-            >
-              First Page
-            </button>
-            <button
-              disabled={!table.getCanPreviousPage()}
-              onClick={() => table.previousPage()}
-              className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
-                ? "disabled:opacity-50"
-                : "hover:bg-gray-300"
-                }`}
-            >
-              Previous Page
-            </button>
-            <button
-              disabled={!table.getCanNextPage()}
-              onClick={() => table.nextPage()}
-              className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
-                ? "disabled:opacity-50"
-                : "hover:bg-gray-300"
-                }`}
-            >
-              Next Page
-            </button>
-            <button
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
-            >
-              Last Page
-            </button>
-          </div>
-        </div>
+      <div className="flex gap-5 mb-4">
+        <button
+          className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
+          onClick={() => table.setPageIndex(0)}
+        >
+          First Page
+        </button>
+        <button
+          disabled={!table.getCanPreviousPage()}
+          onClick={() => table.previousPage()}
+          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
+            ? "disabled:opacity-50"
+            : "hover:bg-gray-300"
+            }`}
+        >
+          Previous Page
+        </button>
+        <button
+          disabled={!table.getCanNextPage()}
+          onClick={() => table.nextPage()}
+          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
+            ? "disabled:opacity-50"
+            : "hover:bg-gray-300"
+            }`}
+        >
+          Next Page
+        </button>
+        <button
+          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+          className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
+        >
+          Last Page
+        </button>
+      </div>
+    </div>
   );
 };
 

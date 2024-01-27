@@ -96,6 +96,12 @@ const Test = () => {
     }
   }, [resourcesResponse]);
 
+  const formatFilePath = (filepath: string) => {
+    const parts = filepath.split('/');
+    const filename = parts[parts.length - 1];
+    return filename.replace('.json', '.js');
+  }
+
   const handleTrain = () => {
     console.log("train");
     console.log("model", selectedModelId);
@@ -341,16 +347,19 @@ const Test = () => {
                       Train
                     </button>
                   </div>
-                  <div className="flex flex-col justify-center items-start w-full px-5 mt-4 text-lg">
-                    <div>
-                      Train status: <span className="text-green-600">Done</span>
+                  {trainResponse && trainResponse.data && (
+                    <div className="flex flex-col justify-center items-start w-full px-5 mt-4 text-lg">
+                      <div>
+                        <span className="flex gap-1">Train status: <p className="text-green-600"> {trainResponse.data.message}</p></span>
+                        <span className="flex flex-col">Output file:<p className="text-green-600">{formatFilePath(trainResponse.data.result)}</p></span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
             <div className="w-full border flex flex-col items-center">
-              <div className="mt-4 xl:px-20 w-full">
+              <div className="mt-4 xl:px-20 w-full flex flex-col justify-center items-center">
                 <h1 className="text-3xl flex justify-center mb-4">Infer</h1>
                 <div className="ml-6">
                   <div className="my-4">
@@ -398,16 +407,18 @@ const Test = () => {
             {/* {isResultAvailable && ( */}
             <div className="w-full border">
               <div className="w-full flex flex-col justify-center items-center my-8 ">
-                <h1 className="text-5xl mb-5 text-fuchsia-700">
+                <h1 className="text-5xl mb-5">
                   Result
                 </h1>
-                <div>
-                  <h1 className="text-3xl text-blue-700">N = 2800.00 (mg/kg)</h1>
-                  <h1 className="text-3xl text-red-700">P = 4820.00 (mg/kg)</h1>
-                  <h1 className="text-3xl text-yellow-700">K = 35530.00 (mg/kg)</h1>
-                  <h1 className="text-xl text-cyan-950">MSE = 33018975</h1>
-                  <h1 className="text-xl text-cyan-950">R2 = -6.72</h1>
-                </div>
+                {inferenceResponse && inferenceResponse.data && (
+                  <div className="text-xl">
+                    <span className="flex gap-1"><p className="text-blue-500">N:</p> <p>{inferenceResponse.data.result.N}</p></span>
+                    <span className="flex gap-1"><p className="text-blue-500">P:</p> <p>{inferenceResponse.data.result.P}</p></span>
+                    <span className="flex gap-1"><p className="text-blue-500">K:</p> <p>{inferenceResponse.data.result.K}</p></span>
+                    <span className="flex gap-1"><p className="text-purple-500">MSE:</p> <p>{inferenceResponse.data.result.metrics.mse}</p></span>
+                    <span className="flex gap-1"><p className="text-purple-500">R2:</p> <p>{inferenceResponse.data.result.metrics.r2}</p></span>
+                  </div>
+                )}
               </div>
             </div>
             {/* )} */}
