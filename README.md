@@ -29,4 +29,3 @@ npm run dev
 ![upload-model](./screenshots/upload-model.png)
 ![user-management](./screenshots/user-man.png)
 ![model-details](./screenshots/model-details.png)
-
