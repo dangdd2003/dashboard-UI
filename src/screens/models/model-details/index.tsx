@@ -115,6 +115,13 @@ const ModelDetail = () => {
           onClose={() => { }}
         />
       )}
+      {newRatingResponse && newRatingResponse.status === 201 && (
+        <ConfirmAlertBox
+          title="Success"
+          description="Your rating has been submitted successfully"
+          onClose={() => { }}
+        />
+      )}
       <div className="mx-auto p-6 rounded-md mt-10 w-3/4">
         <div className="mb-8 pb-2 border-b border-gray-300">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">{model.name}</h1>
