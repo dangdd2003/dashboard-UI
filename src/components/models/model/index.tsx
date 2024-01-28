@@ -8,10 +8,11 @@ type Props = {
   model: IModel;
   onEdit: (model: IModel) => void;
   onDelete: (model: IModel) => void;
+  onDownload: (model: IModel) => void;
   isOwner: boolean
 };
 
-const Model = ({ model, onEdit, onDelete, isOwner }: Props) => {
+const Model = ({ model, onEdit, onDelete, onDownload, isOwner }: Props) => {
   const [openItemIndex, setOpenItemIndex] = useState<number>(-1);
   const [isDropdownActive, setIsDropdownActive] = useState<boolean>(false);
   const [editedModel, setEditedModel] = useState<IModel>(model);
@@ -30,12 +31,10 @@ const Model = ({ model, onEdit, onDelete, isOwner }: Props) => {
         const rootFontSize = parseFloat(
           getComputedStyle(document.documentElement).fontSize,
         );
-        dropdownRef.current.style.top = `${
-          (button.bottom + 100) / rootFontSize
-        }rem`;
-        dropdownRef.current.style.left = `${
-          (button.right + 100) / rootFontSize
-        }rem`;
+        dropdownRef.current.style.top = `${(button.bottom + 100) / rootFontSize
+          }rem`;
+        dropdownRef.current.style.left = `${(button.right + 100) / rootFontSize
+          }rem`;
       }
     }
   };
@@ -49,6 +48,10 @@ const Model = ({ model, onEdit, onDelete, isOwner }: Props) => {
   const handleDeleteClick = () => {
     model && onDelete(model);
   };
+
+  const handleDownloadClick = () => {
+    model && onDownload(model);
+  }
 
   useEffect(() => {
     updateDropdownPosition();
@@ -79,9 +82,8 @@ const Model = ({ model, onEdit, onDelete, isOwner }: Props) => {
         <EditModelBox modelData={model} editedData={editedModel} handleEditBoxSave={handleEditClick} setIsEditBoxVisible={setIsEditBoxVisible} />
       )}
       <div
-        className={`border-2 rounded-lg mt-2 w-full bg-white relative ${
-          isDropdownActive ? "" : "hover:bg-gray-200"
-        }`}
+        className={`border-2 rounded-lg mt-2 w-full bg-white relative ${isDropdownActive ? "" : "hover:bg-gray-200"
+          }`}
       >
         <Link to={`/models/${model.id}`}>
           <div className="flex justify-between rounded-lg w-full shadow-lg p-6">
@@ -95,36 +97,36 @@ const Model = ({ model, onEdit, onDelete, isOwner }: Props) => {
         </Link>
         <div className="flex justify-end pr-6 absolute bottom-12 right-0">
           <div className="absolute">
-          {openItemIndex === model.id && (
-            <div
-              ref={dropdownRef}
-              className="flex flex-col justify-start items-start w-28 h-auto p-2 bg-white border-2 rounded-lg"
-              onMouseEnter={() => setIsDropdownActive(true)}
-              onMouseLeave={() => setIsDropdownActive(false)}
-            >
-              {isOwner && (
-                <div className="w-full">
-                  <button
-                    className="text-sm w-full hover:bg-gray-200"
-                    onClick={() => setIsEditBoxVisible(true)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="text-sm w-full hover:bg-gray-200"
-                    onClick={handleDeleteClick}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-              <button className="text-sm w-full hover:bg-gray-200" 
-              // onClick={handleDownloadClick}
+            {openItemIndex === model.id && (
+              <div
+                ref={dropdownRef}
+                className="flex flex-col justify-start items-start w-28 h-auto p-2 bg-white border-2 rounded-lg"
+                onMouseEnter={() => setIsDropdownActive(true)}
+                onMouseLeave={() => setIsDropdownActive(false)}
               >
-                Download
-              </button>
-            </div>
-          )}
+                {isOwner && (
+                  <div className="w-full">
+                    <button
+                      className="text-sm w-full hover:bg-gray-200"
+                      onClick={() => setIsEditBoxVisible(true)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="text-sm w-full hover:bg-gray-200"
+                      onClick={handleDeleteClick}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+                <button className="text-sm w-full hover:bg-gray-200"
+                  onClick={handleDownloadClick}
+                >
+                  Download
+                </button>
+              </div>
+            )}
           </div>
           <button
             className="flex justify-center items-center"

@@ -19,6 +19,7 @@ const Test = () => {
 
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
   const isBelowSm = useMediaQuery({ maxWidth: 500 });
+  const [alert, setAlert] = useState<number>(0);
   const [selectedModelType, setSelectedModelType] = useState<string>("");
 
   const [selectedModelId, setSelectedModelId] = useState<number>(0);
@@ -101,11 +102,18 @@ const Test = () => {
     const filename = parts[parts.length - 1];
     return filename.replace('.json', '.js');
   }
-
   const handleTrain = () => {
     console.log("train");
     console.log("model", selectedModelId);
     console.log("pca", pcaDimensionTrain);
+    if (selectedModelId === 0) {
+      setAlert(1); // missing model
+      return;
+    }
+    if (pcaDimensionTrain === 0) {
+      setAlert(2); // missing pca dimension
+      return;
+    }
     trainAF({
       axiosInstance: UserDashboardAI,
       method: "get",
@@ -225,6 +233,20 @@ const Test = () => {
   return (
     <Container>
 
+      {alert == 1 && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Please enter model"
+          onClose={() => setAlert(0)}
+        />
+      )}
+      {alert == 2 && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Please select a PCA dimension"
+          onClose={() => setAlert(0)}
+        />
+      )}
       <h1 className={`flex justify-center font-bold text-5xl ${isAboveMedium ? "" : "mt-20"}`}>Tests</h1>
       <div className={`flex mt-8 gap-10 w-full h-full 2xl:px-32 xl:px-28 lg:px-28 md:px-24 sm:px-18 ${isAboveMedium ? "px-32" : "px-10"}`}>
         <div
