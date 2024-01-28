@@ -199,7 +199,7 @@ const TableDatasets = ({ userId }: Props) => {
   }
 
   useEffect(() => {
-    if (downloadResponse && !hasDownloaded) {
+    if (downloadResponse && downloadResponse.data && !hasDownloaded) {
       setHasDownloaded(true);
 
       // Convert the data to a JSON string
@@ -225,6 +225,7 @@ const TableDatasets = ({ userId }: Props) => {
 
       // Remove the link from the body
       document.body.removeChild(link);
+      setHasDownloaded(false);
     }
   }, [downloadResponse, hasDownloaded]);
 

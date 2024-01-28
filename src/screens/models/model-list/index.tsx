@@ -199,7 +199,7 @@ const Models = ({ userID }: Props) => {
 const [hasDownloaded, setHasDownloaded] = useState(false);
 
 useEffect(() => {
-  if (modelDownResponse && !hasDownloaded) {
+  if (modelDownResponse && modelDownResponse.data && !hasDownloaded) {
     setHasDownloaded(true);
 
     // Create a Blob from the content
@@ -221,6 +221,7 @@ useEffect(() => {
 
     // Remove the link from the body
     document.body.removeChild(link);
+    setHasDownloaded(false);
   }
 }, [modelDownResponse, hasDownloaded]);
 
