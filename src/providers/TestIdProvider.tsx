@@ -6,8 +6,8 @@ interface TestIdProviderProps {
 }
 
 interface TestIdState {
-    modelId: number;
-    resourceId: number;
+  modelId: number;
+  resourceId: number;
 }
 
 const TestIdProvider = ({ children }: TestIdProviderProps) => {

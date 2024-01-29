@@ -4,7 +4,6 @@ import {
   ChevronUpIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import { ModelData } from "../ModelData";
 
 import { IModel } from "@/interfaces/IModel";
 import { useMediaQuery } from "react-responsive";
@@ -149,10 +148,13 @@ const Models = ({ userID }: Props) => {
     modelEditAF({
       axiosInstance: UserDashboardAI,
       method: "put",
-      url: "/models/update/" + model.id,
+      url: "/models/update",
       requestConfig: {
         headers: {
           Authorization: `Bearer ${auth?.token}`,
+        },
+        params: {
+          id: model.id
         },
         data: {
           name: model.name,
@@ -196,34 +198,34 @@ const Models = ({ userID }: Props) => {
     });
   }
 
-const [hasDownloaded, setHasDownloaded] = useState(false);
+  const [hasDownloaded, setHasDownloaded] = useState(false);
 
-useEffect(() => {
-  if (modelDownResponse && modelDownResponse.data && !hasDownloaded) {
-    setHasDownloaded(true);
+  useEffect(() => {
+    if (modelDownResponse && modelDownResponse.data && !hasDownloaded) {
+      setHasDownloaded(true);
 
-    // Create a Blob from the content
-    const blob = new Blob([modelDownResponse.data], { type: 'text/plain' });
+      // Create a Blob from the content
+      const blob = new Blob([modelDownResponse.data], { type: 'text/plain' });
 
-    // Create a URL for the Blob
-    const url = URL.createObjectURL(blob);
+      // Create a URL for the Blob
+      const url = URL.createObjectURL(blob);
 
-    // Create a link element
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'model.py'; // Set the file name
+      // Create a link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'model.py'; // Set the file name
 
-    // Append the link to the body
-    document.body.appendChild(link);
+      // Append the link to the body
+      document.body.appendChild(link);
 
-    // Programmatically click the link to download the file
-    link.click();
+      // Programmatically click the link to download the file
+      link.click();
 
-    // Remove the link from the body
-    document.body.removeChild(link);
-    setHasDownloaded(false);
-  }
-}, [modelDownResponse, hasDownloaded]);
+      // Remove the link from the body
+      document.body.removeChild(link);
+      setHasDownloaded(false);
+    }
+  }, [modelDownResponse, hasDownloaded]);
 
   const handleStarsSort = () => {
     setSortOrder((prev) => {
@@ -246,6 +248,11 @@ useEffect(() => {
 
   return (
     <>
+      {modelsError && (
+        <div className="text-red-500">
+          <p>Something went wrong</p>
+        </div>
+      )}
       {alert == 1 && (
         <ConfirmAlertBox
           title="Model Deleted"
@@ -260,8 +267,20 @@ useEffect(() => {
           onClose={() => setAlert(0)}
         />
       )}
-
-
+      {modelEditResponse.status == 202 && (
+        <ConfirmAlertBox
+          title="Model Updated"
+          description="Model has been updated"
+          onClose={() => setAlert(0)}
+        />
+      )}
+      {modelEditError && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Something went wrong"
+          onClose={() => setAlert(0)}
+        />
+      )}
       <div className="flex flex-col items-center justify-center w-full">
         {/* FILTERS */}
         <div

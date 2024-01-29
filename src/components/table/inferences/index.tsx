@@ -172,6 +172,11 @@ const TableInferences = ({ userId }: Props) => {
 
   return (
     <div className="w-full">
+      {inferencesErr && (
+        <div className="text-red-500">
+          <p>{inferencesErr}</p>
+        </div>
+      )}
       {alert == 1 && (
         <ConfirmAlertBox
           title="Delete Inference"
@@ -186,8 +191,13 @@ const TableInferences = ({ userId }: Props) => {
           onClose={() => { }}
         />
       )}
-
-
+      {alert == 2 && inferenceDelErr && (
+        <ConfirmAlertBox
+          title="Delete Inference"
+          description={`Inference deletion failed: ${inferenceDelErr}`}
+          onClose={() => { }}
+        />
+      )}
       <div className="relative w-full min-w-[200px] h-10 mt-5">
         <input
           id="model-title"

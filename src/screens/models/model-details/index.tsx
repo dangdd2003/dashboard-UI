@@ -1,6 +1,7 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import Container from "@/components/container";
 import NewRatingBox from "@/components/editbox/rating";
+import Inference from "@/components/models/inference";
 import ConfirmAlertBox from "@/components/notification/confirm";
 import RatingsSection from "@/components/ratings";
 import useAuth from "@/hooks/useAuth";
@@ -168,6 +169,7 @@ const ModelDetail = () => {
           </div>
         </div>
 
+
         <div className="mb-8">
           <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold mb-4">
             Description
@@ -188,6 +190,8 @@ const ModelDetail = () => {
             <p>Created Time: {formattedCreateTime}</p>
           </div>
         </div>
+
+        {model.id && <Inference modelId={model.id} />}  
 
         <div>
           <h2 className="lg:text-2xl md:text-xl sm:text-lg font-bold mb-4">

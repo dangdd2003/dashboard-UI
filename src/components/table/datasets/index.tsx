@@ -118,12 +118,6 @@ const TableDatasets = ({ userId }: Props) => {
       <div className="ml-2 flex gap-1">
         {auth?.userId == userId.toString() && (
           <div className="flex gap-1">
-            {/* <button */}
-            {/*   title="Edit" */}
-            {/*   className="border border-gray-300 p-2 rounded-md hover:bg-gray-300" */}
-            {/* > */}
-            {/*   <PencilSquareIcon className="h-5 w-5" /> */}
-            {/* </button> */}
             <button
               title="Delete"
               onClick={() => handleDelete(row)}
@@ -275,6 +269,11 @@ const TableDatasets = ({ userId }: Props) => {
 
   return (
     <div className="xl:ml-0 lg:ml-36 md:ml-60 w-full">
+      {datasetsError && (
+        <div className="text-red-500">
+          <p>{datasetsError}</p>
+        </div>
+      )}
       {showAlert == 1 &&
         (
           <ConfirmAlertBox
@@ -287,6 +286,13 @@ const TableDatasets = ({ userId }: Props) => {
         <ConfirmAlertBox
           title="Delete Resource"
           description="Resource deleted successfully"
+          onClose={() => setShowAlert(0)}
+        />
+      )}
+      {showAlert == 2 && deleteError && (
+        <ConfirmAlertBox
+          title="Delete Resource"
+          description={`Resource deletion failed: ${deleteError}`}
           onClose={() => setShowAlert(0)}
         />
       )}

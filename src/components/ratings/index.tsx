@@ -80,6 +80,16 @@ const RatingsSection = ({ modelId }: Props) => {
           ))
         )
         : <p>No ratings yet</p>}
+      {ratingsError && (
+        <div className="text-red-500">
+          <p>{ratingsError}</p>
+        </div>
+      )}
+      {ratingsLoading && (
+        <div className="text-gray-500">
+          <p>Loading...</p>
+        </div>
+      )}
     </div>
   );
 };
