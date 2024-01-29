@@ -14,7 +14,7 @@ import useTestId from "@/hooks/useTestId";
 
 const Test = () => {
   const { auth } = useAuth();
-  const { ids } = useTestId();
+  const { ids, setIds } = useTestId();
   const modelId = ids?.modelId;
 
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
@@ -22,7 +22,7 @@ const Test = () => {
   const [alert, setAlert] = useState<number>(0);
   const [selectedModelType, setSelectedModelType] = useState<string>("");
 
-  const [selectedModelId, setSelectedModelId] = useState<number>(0);
+  const [selectedModelId, setSelectedModelId] = useState<number>();
 
   const [pcaDimensionTrain, setPcaDimensionTrain] = useState<number>(0);
   const [pcaDimensionInference, setPcaDimensionInference] = useState<number>(0);
@@ -156,6 +156,11 @@ const Test = () => {
         },
       },
     });
+  }
+
+  const handleResetModel = () => {
+    setSelectedModelId(0);
+    setIds({ ...ids, modelId: 0 });
   }
 
   const [file, setFile] = useState<File>();
@@ -316,7 +321,7 @@ const Test = () => {
                             )}
                           </select>
                         </div>
-                        <Link to="/tests" onClick={() => setSelectedModelId("")}>
+                        <Link to="/tests" onClick={handleResetModel}>
                           <button className="ml-6 border-2 rounded-lg p-2 hover:bg-gray-900 hover:text-white">
                             Reset
                           </button>
