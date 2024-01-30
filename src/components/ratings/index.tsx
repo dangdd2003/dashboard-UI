@@ -53,7 +53,7 @@ const RatingsSection = ({ modelId }: Props) => {
                 <div className="flex flex-row">
                   <div className="flex justify-center items-center">
                     <img
-                      src={"https://picsum.photos/200"}
+                      src={`http://localhost:8081/files/get-avatar?id=${rating.user_id}`}
                       alt=""
                       className="w-12 h-12 rounded-full mr-4"
                     />
@@ -80,6 +80,16 @@ const RatingsSection = ({ modelId }: Props) => {
           ))
         )
         : <p>No ratings yet</p>}
+      {ratingsError && (
+        <div className="text-red-500">
+          <p>{ratingsError}</p>
+        </div>
+      )}
+      {ratingsLoading && (
+        <div className="text-gray-500">
+          <p>Loading...</p>
+        </div>
+      )}
     </div>
   );
 };

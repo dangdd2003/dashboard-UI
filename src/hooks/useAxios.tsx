@@ -32,7 +32,7 @@ const useAxios = (
           url,
           ...requestConfig,
           signal: AbortSignal.timeout(5000),
-        });
+        })
         console.log(res);
         setResponse({
           data: res.data,

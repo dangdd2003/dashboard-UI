@@ -1,6 +1,7 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import Container from "@/components/container";
 import NewRatingBox from "@/components/editbox/rating";
+import Inference from "@/components/models/inference";
 import ConfirmAlertBox from "@/components/notification/confirm";
 import RatingsSection from "@/components/ratings";
 import useAuth from "@/hooks/useAuth";
@@ -115,6 +116,13 @@ const ModelDetail = () => {
           onClose={() => { }}
         />
       )}
+      {newRatingResponse && newRatingResponse.status === 201 && (
+        <ConfirmAlertBox
+          title="Success"
+          description="Your rating has been submitted successfully"
+          onClose={() => { }}
+        />
+      )}
       <div className="mx-auto p-6 rounded-md mt-10 w-3/4">
         <div className="mb-8 pb-2 border-b border-gray-300">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">{model.name}</h1>
@@ -161,6 +169,7 @@ const ModelDetail = () => {
           </div>
         </div>
 
+
         <div className="mb-8">
           <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold mb-4">
             Description
@@ -181,6 +190,8 @@ const ModelDetail = () => {
             <p>Created Time: {formattedCreateTime}</p>
           </div>
         </div>
+
+        {model.id && <Inference modelId={model.id} />}  
 
         <div>
           <h2 className="lg:text-2xl md:text-xl sm:text-lg font-bold mb-4">

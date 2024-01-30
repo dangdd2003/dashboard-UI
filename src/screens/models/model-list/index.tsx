@@ -4,7 +4,6 @@ import {
   ChevronUpIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import { ModelData } from "../ModelData";
 
 import { IModel } from "@/interfaces/IModel";
 import { useMediaQuery } from "react-responsive";
@@ -25,8 +24,8 @@ const Models = ({ userID }: Props) => {
   const { auth } = useAuth();
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
   const isOwner = auth?.userId == userID.toString();
-  const [deleteModelNotification, setDeleteModelNotification] = useState(false);
-  const [sortOrder, setSortOrder] = useState(0); // 1 for ascending, -1 for descending
+  const [sortOrder, setSortOrder] = useState<number>(0); // 1 for ascending, -1 for descending
+  const [alert, setAlert] = useState<number>(0);
   const [modelsResponse, modelsError, modelsLoading, modelsRefetch] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
@@ -53,6 +52,8 @@ const Models = ({ userID }: Props) => {
     modelEditLoading,
     modelEditAF,
   ] = useAxiosFunction();
+
+  const [modelDownResponse, modelDownError, modelDownLoading, modelDownAF] = useAxiosFunction();
 
   const [models, setModels] = useState<IModel[]>(modelsResponse?.data);
   const [originalModels, setOriginalModels] = useState<IModel[]>(
@@ -123,7 +124,7 @@ const Models = ({ userID }: Props) => {
   //Effect to show the notification when a model is deleted
   useEffect(() => {
     if (modelDeleteResponse?.data) {
-      setDeleteModelNotification(true);
+      setAlert(1);
     }
   }, [modelDeleteResponse]);
 
@@ -147,10 +148,13 @@ const Models = ({ userID }: Props) => {
     modelEditAF({
       axiosInstance: UserDashboardAI,
       method: "put",
-      url: "/models/update/" + model.id,
+      url: "/models/update",
       requestConfig: {
         headers: {
           Authorization: `Bearer ${auth?.token}`,
+        },
+        params: {
+          id: model.id
         },
         data: {
           name: model.name,
@@ -161,6 +165,7 @@ const Models = ({ userID }: Props) => {
   };
 
   const handleDelete = (model: IModel) => {
+    setModels(models.filter((m) => m.id !== model.id));
     console.log(model);
     modelDeleteAF({
       axiosInstance: UserDashboardAI,
@@ -172,8 +177,55 @@ const Models = ({ userID }: Props) => {
         },
       },
     });
-    setModels(models.filter((m) => m.id !== model.id));
   };
+
+  const handleDownload = (model: IModel) => {
+    console.log(model);
+    setHasDownloaded(false);
+    modelDownAF({
+      axiosInstance: UserDashboardAI,
+      method: "get",
+      url: "/files/get-model",
+      requestConfig: {
+        headers: {
+          Authorization: `Bearer ${auth?.token}`,
+        },
+        params: {
+          model_id: model.id,
+          user_id: userID,
+        },
+      },
+    });
+  }
+
+  const [hasDownloaded, setHasDownloaded] = useState(false);
+
+  useEffect(() => {
+    if (modelDownResponse && modelDownResponse.data && !hasDownloaded) {
+      setHasDownloaded(true);
+
+      // Create a Blob from the content
+      const blob = new Blob([modelDownResponse.data], { type: 'text/plain' });
+
+      // Create a URL for the Blob
+      const url = URL.createObjectURL(blob);
+
+      // Create a link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'model.py'; // Set the file name
+
+      // Append the link to the body
+      document.body.appendChild(link);
+
+      // Programmatically click the link to download the file
+      link.click();
+
+      // Remove the link from the body
+      document.body.removeChild(link);
+      setHasDownloaded(false);
+    }
+  }, [modelDownResponse, hasDownloaded]);
 
   const handleStarsSort = () => {
     setSortOrder((prev) => {
@@ -196,14 +248,39 @@ const Models = ({ userID }: Props) => {
 
   return (
     <>
-      {deleteModelNotification && (
+      {modelsError && (
+        <div className="text-red-500">
+          <p>Something went wrong</p>
+        </div>
+      )}
+      {alert == 1 && (
         <ConfirmAlertBox
           title="Model Deleted"
           description="Model has been deleted"
-          onClose={() => setDeleteModelNotification(!deleteModelNotification)}
+          onClose={() => setAlert(0)}
         />
       )}
-
+      {modelDeleteError && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Something went wrong"
+          onClose={() => setAlert(0)}
+        />
+      )}
+      {modelEditResponse.status == 202 && (
+        <ConfirmAlertBox
+          title="Model Updated"
+          description="Model has been updated"
+          onClose={() => setAlert(0)}
+        />
+      )}
+      {modelEditError && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Something went wrong"
+          onClose={() => setAlert(0)}
+        />
+      )}
       <div className="flex flex-col items-center justify-center w-full">
         {/* FILTERS */}
         <div
@@ -340,6 +417,7 @@ const Models = ({ userID }: Props) => {
                     model={model}
                     onDelete={handleDelete}
                     onEdit={handleEdit}
+                    onDownload={handleDownload}
                     isOwner={isOwner}
                   />
                 </div>

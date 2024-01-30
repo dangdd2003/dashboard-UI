@@ -14,14 +14,15 @@ import useTestId from "@/hooks/useTestId";
 
 const Test = () => {
   const { auth } = useAuth();
-  const { ids } = useTestId();
+  const { ids, setIds } = useTestId();
   const modelId = ids?.modelId;
 
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
   const isBelowSm = useMediaQuery({ maxWidth: 500 });
+  const [alert, setAlert] = useState<number>(0);
   const [selectedModelType, setSelectedModelType] = useState<string>("");
 
-  const [selectedModelId, setSelectedModelId] = useState<number>(0);
+  const [selectedModelId, setSelectedModelId] = useState<number>();
 
   const [pcaDimensionTrain, setPcaDimensionTrain] = useState<number>(0);
   const [pcaDimensionInference, setPcaDimensionInference] = useState<number>(0);
@@ -96,10 +97,23 @@ const Test = () => {
     }
   }, [resourcesResponse]);
 
+  const formatFilePath = (filepath: string) => {
+    const parts = filepath.split('/');
+    const filename = parts[parts.length - 1];
+    return filename.replace('.json', '.js');
+  }
   const handleTrain = () => {
     console.log("train");
     console.log("model", selectedModelId);
     console.log("pca", pcaDimensionTrain);
+    if (selectedModelId === 0) {
+      setAlert(1); // missing model
+      return;
+    }
+    if (pcaDimensionTrain === 0) {
+      setAlert(2); // missing pca dimension
+      return;
+    }
     trainAF({
       axiosInstance: UserDashboardAI,
       method: "get",
@@ -142,6 +156,11 @@ const Test = () => {
         },
       },
     });
+  }
+
+  const handleResetModel = () => {
+    setSelectedModelId(0);
+    setIds({ ...ids, modelId: 0 });
   }
 
   const [file, setFile] = useState<File>();
@@ -219,6 +238,20 @@ const Test = () => {
   return (
     <Container>
 
+      {alert == 1 && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Please enter model"
+          onClose={() => setAlert(0)}
+        />
+      )}
+      {alert == 2 && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Please select a PCA dimension"
+          onClose={() => setAlert(0)}
+        />
+      )}
       <h1 className={`flex justify-center font-bold text-5xl ${isAboveMedium ? "" : "mt-20"}`}>Tests</h1>
       <div className={`flex mt-8 gap-10 w-full h-full 2xl:px-32 xl:px-28 lg:px-28 md:px-24 sm:px-18 ${isAboveMedium ? "px-32" : "px-10"}`}>
         <div
@@ -288,7 +321,7 @@ const Test = () => {
                             )}
                           </select>
                         </div>
-                        <Link to="/tests" onClick={() => setSelectedModelId("")}>
+                        <Link to="/tests" onClick={handleResetModel}>
                           <button className="ml-6 border-2 rounded-lg p-2 hover:bg-gray-900 hover:text-white">
                             Reset
                           </button>
@@ -341,16 +374,19 @@ const Test = () => {
                       Train
                     </button>
                   </div>
-                  <div className="flex flex-col justify-center items-start w-full px-5 mt-4 text-lg">
-                    <div>
-                      Train status: <span className="text-green-600">Done</span>
+                  {trainResponse && trainResponse.data && (
+                    <div className="flex flex-col justify-center items-start w-full px-5 mt-4 text-lg">
+                      <div>
+                        <span className="flex gap-1">Train status: <p className="text-green-600"> {trainResponse.data.message}</p></span>
+                        <span className="flex flex-col">Output file:<p className="text-green-600">{formatFilePath(trainResponse.data.result)}</p></span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
             <div className="w-full border flex flex-col items-center">
-              <div className="mt-4 xl:px-20 w-full">
+              <div className="mt-4 xl:px-20 w-full flex flex-col justify-center items-center">
                 <h1 className="text-3xl flex justify-center mb-4">Infer</h1>
                 <div className="ml-6">
                   <div className="my-4">
@@ -398,16 +434,18 @@ const Test = () => {
             {/* {isResultAvailable && ( */}
             <div className="w-full border">
               <div className="w-full flex flex-col justify-center items-center my-8 ">
-                <h1 className="text-5xl mb-5 text-fuchsia-700">
+                <h1 className="text-5xl mb-5">
                   Result
                 </h1>
-                <div>
-                  <h1 className="text-3xl text-blue-700">N = 2800.00 (mg/kg)</h1>
-                  <h1 className="text-3xl text-red-700">P = 4820.00 (mg/kg)</h1>
-                  <h1 className="text-3xl text-yellow-700">K = 35530.00 (mg/kg)</h1>
-                  <h1 className="text-xl text-cyan-950">MSE = 33018975</h1>
-                  <h1 className="text-xl text-cyan-950">R2 = -6.72</h1>
-                </div>
+                {inferenceResponse && inferenceResponse.data && (
+                  <div className="text-xl">
+                    <span className="flex gap-1"><p className="text-blue-500">N:</p> <p>{inferenceResponse.data.result.N}</p></span>
+                    <span className="flex gap-1"><p className="text-blue-500">P:</p> <p>{inferenceResponse.data.result.P}</p></span>
+                    <span className="flex gap-1"><p className="text-blue-500">K:</p> <p>{inferenceResponse.data.result.K}</p></span>
+                    <span className="flex gap-1"><p className="text-purple-500">MSE:</p> <p>{inferenceResponse.data.result.metrics.mse}</p></span>
+                    <span className="flex gap-1"><p className="text-purple-500">R2:</p> <p>{inferenceResponse.data.result.metrics.r2}</p></span>
+                  </div>
+                )}
               </div>
             </div>
             {/* )} */}

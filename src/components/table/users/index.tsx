@@ -205,6 +205,11 @@ const TableUsers = () => {
 
   return (
     <div className="xl:ml-0 lg:ml-36 md:ml-80 w-full">
+      {usersError && (
+        <div className="text-red-500">
+          <p>{usersError}</p>
+        </div>
+      )}
       {isEditBoxVisible && (
         <EditUserBox
           userData={currentUserData}
@@ -220,6 +225,40 @@ const TableUsers = () => {
             onClose={handleAlertClose}
           />
         )}
+      {deleteUserResponse?.status == 200 && (
+        <ConfirmAlertBox
+          title="User Deleted"
+          description="User has been deleted successfully"
+          onClose={() => setShowAlert(false)}
+        />
+      )}
+      {deleteUserError && (
+        <ConfirmAlertBox
+          title="User Deletion Failed"
+          description={`User deletion has failed: ${deleteUserError}`}
+          onClose={() => setShowAlert(false)}
+        />
+      )}
+      {updateUserResponse?.status == 202 && (
+        <ConfirmAlertBox
+          title="User Updated"
+          description="User has been updated successfully"
+          onClose={() => setIsEditBoxVisible(false)}
+        />
+      )}
+      {updateUserError && (
+        <ConfirmAlertBox
+          title="User Update Failed"
+          description={`User update has failed: ${updateUserError}`}
+          onClose={() => setIsEditBoxVisible(false)}
+        />
+      )}
+      {userLoading && (
+        <div className="text-blue-500">
+          <p>Loading...</p>
+        </div>
+      )}
+
       <div className="relative w-full min-w-[200px] h-10 mt-5">
         <input
           id="filter"
@@ -317,8 +356,8 @@ const TableUsers = () => {
           disabled={!table.getCanPreviousPage()}
           onClick={() => table.previousPage()}
           className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
-              ? "disabled:opacity-50"
-              : "hover:bg-gray-300"
+            ? "disabled:opacity-50"
+            : "hover:bg-gray-300"
             }`}
         >
           Previous Page
@@ -327,8 +366,8 @@ const TableUsers = () => {
           disabled={!table.getCanNextPage()}
           onClick={() => table.nextPage()}
           className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
-              ? "disabled:opacity-50"
-              : "hover:bg-gray-300"
+            ? "disabled:opacity-50"
+            : "hover:bg-gray-300"
             }`}
         >
           Next Page

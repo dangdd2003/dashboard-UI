@@ -3,35 +3,15 @@ import ConfirmAlertBox from "@/components/notification/confirm";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
-import useTestId from "@/hooks/useTestId";
-import { IDataset } from "@/interfaces/IDataset";
-
-import {
-  ArrowDownTrayIcon,
-  ArrowLongDownIcon,
-  ArrowLongUpIcon,
-  ArrowsUpDownIcon,
-  LightBulbIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  OnChangeFn,
-  Row,
-  SortingState,
-  useReactTable,
-} from "@tanstack/react-table";
+import { IInference } from "@/interfaces/IInference";
+import { ArrowDownTrayIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowLongDownIcon, ArrowLongUpIcon, ArrowsUpDownIcon } from "@heroicons/react/24/outline";
+import { OnChangeFn, SortingState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 
 type Props = {
   userId: number;
-};
+}
 
 type Column = {
   header: string;
@@ -39,40 +19,35 @@ type Column = {
   cell?: ({ row }: any) => JSX.Element;
 };
 
-const TableDatasets = ({ userId }: Props) => {
+const TableInferences = ({ userId }: Props) => {
   const { auth } = useAuth();
-  const { ids, setIds } = useTestId();
-  useAxiosFunction();
-  const [showAlert, setShowAlert] = useState<number>();
-  const [rowToDelete, setRowToDelete] = useState<Row<any> | null>(null);
-  const [datasetsResponse, datasetsError, userLoading, userRefetch] = useAxios({
+  const [alert, setAlert] = useState<number>(0);
+  const [row, setRow] = useState<any>(null);
+  const [inferencesRes, inferencesErr, inferencesLoad, inferencesRefetch] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/resources/user_id/",
+    url: "/inferences/by-user",
     requestConfig: {
       headers: {
-        Authorization: `Bearer ${auth?.token}`,
+        Authorization: `Bearer ${auth?.token}`
       },
       params: {
-        user_id: userId,
+        user_id: userId
       },
-    },
-  });
+    }
+  })
 
-  const [deleteResponse, deleteError, deleteLoading, deleteAF] = useAxiosFunction();
-  const [downloadResponse, downloadError, downloadLoading, downloadAF] = useAxiosFunction();
-
-  const [data, setData] = useState<IDataset[]>(datasetsResponse?.data);
+  const [inferenceDelRes, inferenceDelErr, inferenceDelLoad, inferenceDelAF] = useAxiosFunction();
+  const [data, setData] = useState<IInference[]>(inferencesRes)
 
   useEffect(() => {
-    if (datasetsResponse) {
-      let dataArray = Array.isArray(datasetsResponse.data)
-        ? datasetsResponse.data
-        : [datasetsResponse.data];
-      setData(dataArray);
+    if (inferencesRes?.data) {
+      let dataArray = Array.isArray(inferencesRes.data)
+        ? inferencesRes.data
+        : [inferencesRes.data];
+      setData(dataArray)
     }
-    console.log(data);
-  }, [datasetsResponse]);
+  }, [inferencesRes])
 
   const columns: Column[] = [
     {
@@ -80,79 +55,83 @@ const TableDatasets = ({ userId }: Props) => {
       accessorKey: "id",
     },
     {
-      header: "Type",
-      accessorKey: "type",
+      header: "Model ID",
+      accessorKey: "model_id",
     },
-    // {
-    //   header: "First Name",
-    //   accessorKey: "firstname",
-    // },
-    // {
-    //   header: "Last Name",
-    //   accessorKey: "lastname",
-    // },
     {
-      header: "Filepath",
-      accessorKey: "filepath",
-      cell: ({ row }: any) => (
-        <div>
-          {row.original.filepath ? formatFilePath(row.original.filepath) : ''}
-        </div>
-      ),
+      header: "Result",
+      accessorKey: "result",
+      cell: ({ row }: any) => {
+        const resultString = row.original.result;
+        if (!resultString) {
+          return <div>No result</div>;
+        }
+
+        const parsedResult = JSON.parse(resultString);
+        const { message, result } = parsedResult || {};
+        const { K, N, P, metrics } = result || {};
+        const { mse, r2 } = metrics || {};
+
+        return (
+          <div>
+            <p>Message: {message}</p>
+            <p>K: {K}</p>
+            <p>N: {N}</p>
+            <p>P: {P}</p>
+            <p>MSE: {mse}</p>
+            <p>R2: {r2}</p>
+          </div>
+        );
+      },
     },
     {
       header: "Created At",
       accessorKey: "createTime",
       cell: ({ row }: any) => (
-        <div>
-          {formattedCreateTime(row.original.createTime)}
-        </div>
-      ),
-    },
-  ];
+        <span>{formattedCreateTime(row.original.createTime)}</span>)
+    }
+  ]
 
   columns.push({
     header: "Actions",
     accessorKey: "actions",
     cell: ({ row }: any) => (
-      <div className="ml-2 flex gap-1">
+      <div className="ml-2 flex justify-center">
         {auth?.userId == userId.toString() && (
           <div className="flex gap-1">
             <button
               title="Delete"
-              onClick={() => handleDelete(row)}
+              onClick={() => handleDeleteAlert(row)}
               className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
             >
               <TrashIcon className="h-5 w-5" />
             </button>
           </div>
         )}
-        <Link to={`/tests`} onClick={() => setIds({ modelId: ids?.modelId, resourceId: row.original.id })}>
-          <button
-            title="Test"
-            className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
-          >
-            <LightBulbIcon className="h-5 w-5" />
-          </button>
-        </Link>
-        <button
-          title="Download"
-          className="border border-gray-300 p-2 rounded-md hover:bg-gray-300"
-          onClick={() => handleDownload(row)}
-        >
-          <ArrowDownTrayIcon className="h-5 w-5" />
-        </button>
+
       </div>
     ),
   });
 
-  const formatFilePath = (filepath: string) => {
-    if (!filepath) {
-      return '';
-    }
-    const parts = filepath.split('/');
-    const filename = parts[parts.length - 1];
-    return filename;
+  const handleDeleteAlert = (row: any) => {
+    console.log(row)
+    setAlert(1)
+    setRow(row)
+  }
+
+  const handleDelete = () => {
+    setData(data.filter((item) => item.id !== row.original.id))
+    inferenceDelAF({
+      axiosInstance: UserDashboardAI,
+      method: "delete",
+      url: `/inferences/delete/${row.original.id}`,
+      requestConfig: {
+        headers: {
+          Authorization: `Bearer ${auth?.token} `
+        },
+      }
+    })
+    setAlert(2);
   }
 
   const formattedCreateTime = (createTime: string) => {
@@ -165,83 +144,6 @@ const TableDatasets = ({ userId }: Props) => {
       second: '2-digit'
     })
   }
-
-  const handleDelete = (row: any) => {
-    // Set the row to be deleted and show the alert
-    setRowToDelete(row);
-    setShowAlert(1);
-  };
-
-  const [hasDownloaded, setHasDownloaded] = useState(false);
-
-  const handleDownload = (row: any) => {
-    setHasDownloaded(false);
-    downloadAF({
-      axiosInstance: UserDashboardAI,
-      method: "get",
-      url: `/files/get-resource`,
-      requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
-        params: {
-          resource_id: row.original.id,
-          user_id: userId,
-        },
-      },
-    });
-  }
-
-  useEffect(() => {
-    if (downloadResponse && downloadResponse.data && !hasDownloaded) {
-      setHasDownloaded(true);
-
-      // Convert the data to a JSON string
-      const jsonString = JSON.stringify(downloadResponse.data);
-      const filename = formatFilePath(downloadResponse.data.filepath)
-
-      // Create a Blob from the JSON string
-      const blob = new Blob([jsonString], { type: 'application/json' });
-
-      // Create a URL for the Blob
-      const url = URL.createObjectURL(blob);
-
-      // Create a link element
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename; // Set the file name
-
-      // Append the link to the body
-      document.body.appendChild(link);
-
-      // Programmatically click the link to download the file
-      link.click();
-
-      // Remove the link from the body
-      document.body.removeChild(link);
-      setHasDownloaded(false);
-    }
-  }, [downloadResponse, hasDownloaded]);
-
-
-  const handleDeleteAlertClose = (value: boolean) => {
-    // If the value is true, proceed with the deletion
-    if (value && rowToDelete) {
-      setData(data.filter((item: any) => item.id !== rowToDelete.original.id));
-      deleteAF({
-        axiosInstance: UserDashboardAI,
-        method: "delete",
-        url: `/resources/delete/${rowToDelete.original.id}`,
-        requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-        },
-      });
-    }
-    // Hide the alert
-    setShowAlert(2);
-  };
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [filtering, setFiltering] = useState("");
@@ -267,33 +169,33 @@ const TableDatasets = ({ userId }: Props) => {
     onSortingChange: handleSortingChange,
   });
 
+
   return (
-    <div className="xl:ml-0 lg:ml-36 md:ml-60 w-full">
-      {datasetsError && (
+    <div className="w-full">
+      {inferencesErr && (
         <div className="text-red-500">
-          <p>{datasetsError}</p>
+          <p>{inferencesErr}</p>
         </div>
       )}
-      {showAlert == 1 &&
-        (
-          <ConfirmAlertBox
-            title="Delete Resource"
-            description="Are you sure you want to delete this resource?"
-            onClose={handleDeleteAlertClose}
-          />
-        )}
-      {showAlert == 2 && deleteResponse.status == 200 && (
+      {alert == 1 && (
         <ConfirmAlertBox
-          title="Delete Resource"
-          description="Resource deleted successfully"
-          onClose={() => setShowAlert(0)}
+          title="Delete Inference"
+          description="Are you sure you want to delete this inference?"
+          onClose={handleDelete}
         />
       )}
-      {showAlert == 2 && deleteError && (
+      {alert == 2 && inferenceDelRes.status == 200 && (
         <ConfirmAlertBox
-          title="Delete Resource"
-          description={`Resource deletion failed: ${deleteError}`}
-          onClose={() => setShowAlert(0)}
+          title="Delete Inference"
+          description="Inference deleted successfully"
+          onClose={() => { }}
+        />
+      )}
+      {alert == 2 && inferenceDelErr && (
+        <ConfirmAlertBox
+          title="Delete Inference"
+          description={`Inference deletion failed: ${inferenceDelErr}`}
+          onClose={() => { }}
         />
       )}
       <div className="relative w-full min-w-[200px] h-10 mt-5">
@@ -348,7 +250,7 @@ const TableDatasets = ({ userId }: Props) => {
             ))}
           </thead>
           <tbody>
-            {data.length != 0 && table.getRowModel().rows.map((row) => (
+            {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
                 className="p-2 border-b border-blue-gray-50"
@@ -356,7 +258,7 @@ const TableDatasets = ({ userId }: Props) => {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="p-3"
+                    className="p-1"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -379,7 +281,7 @@ const TableDatasets = ({ userId }: Props) => {
           className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
             ? "disabled:opacity-50"
             : "hover:bg-gray-300"
-            }`}
+            } `}
         >
           Previous Page
         </button>
@@ -389,7 +291,7 @@ const TableDatasets = ({ userId }: Props) => {
           className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
             ? "disabled:opacity-50"
             : "hover:bg-gray-300"
-            }`}
+            } `}
         >
           Next Page
         </button>
@@ -401,7 +303,8 @@ const TableDatasets = ({ userId }: Props) => {
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default TableDatasets;
+
+export default TableInferences;

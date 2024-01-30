@@ -8,7 +8,6 @@ export type Props = {
 };
 
 const ModelCardLarge: React.FC<Props> = ({ model }) => {
-  const isAboveMedium = useMediaQuery({ minWidth: 768 });
   return (
     <div className={`p-2`}>
       <div

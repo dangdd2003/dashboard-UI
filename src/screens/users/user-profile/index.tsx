@@ -1,6 +1,7 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import Container from "@/components/container";
 import TableDatasets from "@/components/table/datasets";
+import TableInferences from "@/components/table/inferences";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import Models from "@/screens/models/model-list";
@@ -69,6 +70,17 @@ const UserProfile = () => {
         </div>
         <div
           className={`hover:bg-slate-300 pt-5 px-5`}
+          onClick={() => setSelectedButton("inferences")}
+        >
+          <button
+            className={`pb-3 border-gray-500 ${selectedButton === "inferences" ? "border-b-4" : ""
+              }`}
+          >
+            Inferences
+          </button>
+        </div>
+        <div
+          className={`hover:bg-slate-300 pt-5 px-5`}
           onClick={() => setSelectedButton("models")}
         >
           <button
@@ -87,6 +99,11 @@ const UserProfile = () => {
       {selectedButton === "resources" && userId !== undefined && (
         <div className={`flex gap-3 mt-10 ${isAboveMedium ? "" : " ml-0 w-5/6"}`}>
           <TableDatasets userId={userId || 0} />
+        </div>
+      )}
+      {selectedButton === "inferences" && userId !== undefined && (
+        <div className={`flex gap-3 mt-10 ${isAboveMedium ? "" : " ml-0 w-5/6"}`}>
+          <TableInferences userId={userId || 0} />
         </div>
       )}
     </Container>
