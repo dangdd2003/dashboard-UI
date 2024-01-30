@@ -43,7 +43,7 @@ const App = () => {
             <Route path="/profile/:username" element={<UserProfile />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/signout" element={<SignOut />} />
-            <Route path="/user-management" element={<UserManagement />} />
+            {auth?.role === "admin" && <Route path="/user-management" element={<UserManagement />} />}
           </>
         )
         : <Route path="/authenticate" element={<Authenticate />} />}

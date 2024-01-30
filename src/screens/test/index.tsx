@@ -382,6 +382,13 @@ const Test = () => {
                       </div>
                     </div>
                   )}
+                  {trainError && (
+                    <div className="flex flex-col justify-center items-start w-full px-5 mt-4 text-lg">
+                      <div>
+                        <span className=" gap-1">Train status: <p className="text-red-600"> {trainError}</p></span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

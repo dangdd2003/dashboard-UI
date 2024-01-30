@@ -77,6 +77,9 @@ const Sidebar = () => {
             <div>
               <ul>
                 {SidebarData.map((item, index) => {
+                    if (item.path === "/user-management" && auth?.role !== "admin") {
+                        return null;
+                      }
                   return (
                     <Link
                       to={item.path === "/profile"
