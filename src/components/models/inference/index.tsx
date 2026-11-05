@@ -1,4 +1,5 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
+import { parseInferenceResult } from "@/apis/inference";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import { IInference } from "@/interfaces/IInference";
@@ -47,18 +48,18 @@ const Inference = ({ modelId }: Props) => {
       <div className="flex overflow-x-auto">
         {inferenceResponse.data && Array.isArray(inferences) && inferences.length > 0 &&
           inferences.map((inference) => {
-            const result = JSON.parse(inference.result);
+            const result = parseInferenceResult(inference.result);
             return (
               <div
                 className="flex flex-col h-auto w-full border-2 gap-5 p-5 rounded-lg shadow-lg mb-4"
                 key={inference.id}
               >
                 <span>IID: {inference.id}</span>
-                <span>K: {result.result.K}</span>
-                <span>N: {result.result.N}</span>
-                <span>P: {result.result.P}</span>
-                <span>MSE: {result.result.metrics.mse}</span>
-                <span>R2: {result.result.metrics.r2}</span>
+                <span>K: {result.result?.K}</span>
+                <span>N: {result.result?.N}</span>
+                <span>P: {result.result?.P}</span>
+                <span>MSE: {result.result?.metrics?.mse}</span>
+                <span>R2: {result.result?.metrics?.r2}</span>
               </div>
             );
           })

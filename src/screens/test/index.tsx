@@ -8,7 +8,6 @@ import { IModel } from "@/interfaces/IModel";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { Link } from "react-router";
-import { ModelTypes } from "./ModelTypes";
 import { IDataset } from "@/interfaces/IDataset";
 import useTestId from "@/hooks/useTestId";
 
@@ -27,18 +26,15 @@ const Test = () => {
   const [pcaDimensionTrain, setPcaDimensionTrain] = useState<number>(0);
   const [pcaDimensionInference, setPcaDimensionInference] = useState<number>(0);
 
-  const [trainResponse, trainError, , trainAF] = useAxiosFunction();
-  const [inferenceResponse, , , inferenceAF] = useAxiosFunction();
+  const [trainResponse, trainError, trainLoading, trainAF] = useAxiosFunction();
+  const [inferenceResponse, inferenceError, inferenceLoading, inferenceAF] =
+    useAxiosFunction();
 
   const [modelsResponse] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/models/models-by-user",
-    // url: "/models",
     requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
       params: {
         user_id: auth?.userId,
       },
@@ -50,13 +46,8 @@ const Test = () => {
   ] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/resources/user_id?=" + auth?.userId,
-    // url: "/resources",
-    requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
-    },
+    // defaults to the caller's own resources
+    url: "/resources/user_id",
   });
 
   const [modelResponse, , , modelAF] = useAxiosFunction();
@@ -67,23 +58,22 @@ const Test = () => {
         axiosInstance: UserDashboardAI,
         method: "get",
         url: "/models/" + modelId,
-        requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-        },
       });
       setSelectedModelId(modelId);
     }
   }, [modelId]);
 
-  const [models, setModels] = useState<IModel[]>(modelsResponse?.data || []);
+  const [models, setModels] = useState<IModel[]>([]);
+  // model types actually present (the backend accepts any [A-Za-z0-9_-]{1,64})
+  const modelTypes = Array.isArray(models)
+    ? [...new Set(models.map((m) => m.type).filter(Boolean))]
+    : [];
   const [, setResources] = useState<IDataset[]>(
     resourcesResponse?.data || [],
   );
 
   useEffect(() => {
-    if (modelsResponse) {
+    if (Array.isArray(modelsResponse?.data)) {
       setModels(modelsResponse.data);
     }
   }, [modelsResponse]);
@@ -94,64 +84,61 @@ const Test = () => {
     }
   }, [resourcesResponse]);
 
-  const formatFilePath = (filepath: string) => {
+  const formatFilePath = (filepath: unknown) => {
+    if (typeof filepath !== "string") return "";
     const parts = filepath.split('/');
-    const filename = parts[parts.length - 1];
-    return filename.replace('.json', '.js');
+    return parts[parts.length - 1];
   }
   const handleTrain = () => {
-    console.log("train");
-    console.log("model", selectedModelId);
-    console.log("pca", pcaDimensionTrain);
-    if (selectedModelId === 0) {
+    if (!selectedModelId) {
       setAlert(1); // missing model
       return;
     }
-    if (pcaDimensionTrain === 0) {
+    if (!(pcaDimensionTrain > 0)) {
       setAlert(2); // missing pca dimension
       return;
     }
+    // POST since 2.0; the caller is taken from the JWT. The backend waits up to 300 s for the ML service.
     trainAF({
       axiosInstance: UserDashboardAI,
-      method: "get",
+      method: "post",
       url: "/inferences/model-train-eval-MPAP",
       requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
         params: {
           model_id: selectedModelId,
           pca_dim: pcaDimensionTrain,
-          user_id: auth?.userId,
         },
       },
+      timeoutMs: 330000,
     });
 
   }
 
   const handleInfer = () => {
-    console.log("infer");
-    console.log("file", file);
-    console.log("pca", pcaDimensionInference);
-    console.log("model", selectedModelId);
+    if (!selectedModelId) {
+      setAlert(1);
+      return;
+    }
+    if (!file) {
+      setAlert(3);
+      return;
+    }
+    // test_sample: UTF-8 text file (max 1 MiB) of numbers separated by commas and/or whitespace
+    const form = new FormData();
+    form.append("test_sample", file);
     inferenceAF({
       axiosInstance: UserDashboardAI,
       method: "post",
       url: "/inferences/model-inference-MPAP",
       requestConfig: {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${auth?.token}`,
-        },
         params: {
           model_id: selectedModelId,
-          pca_dim: pcaDimensionInference,
-          user_id: auth?.userId,
+          // optional: left out of the ML call when missing
+          ...(pcaDimensionInference > 0 ? { pca_dim: pcaDimensionInference } : {}),
         },
-        data: {
-          test_sample: file,
-        },
+        data: form,
       },
+      timeoutMs: 330000,
     });
   }
 
@@ -162,7 +149,6 @@ const Test = () => {
 
   const [file, setFile] = useState<File>();
   const [fileDimensions, setFileDimensions] = useState<number | null>(null);
-  const [fileAsArray, setFileAsArray] = useState<Array<number>>();
 
   const onSelectFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -172,11 +158,9 @@ const Test = () => {
       const reader = new FileReader();
       reader.onload = function(e) {
         if (typeof e.target?.result === 'string') {
-          const header = e.target.result.split('\n')[0]; // Take the first line
-          const array = header.split(',').map(item => parseFloat(item.trim())); // Split the header into an array
-          setFileAsArray(array);
-          console.log(fileAsArray)
-          setFileDimensions(array.length);
+          // same separators as the backend parser: commas and/or whitespace
+          const values = e.target.result.split(/[,\s]+/).filter((v) => v !== "");
+          setFileDimensions(values.length);
         }
       };
       reader.readAsText(file);
@@ -242,6 +226,13 @@ const Test = () => {
           onClose={() => setAlert(0)}
         />
       )}
+      {alert == 3 && (
+        <ConfirmAlertBox
+          title="Error"
+          description="Please choose an inference file"
+          onClose={() => setAlert(0)}
+        />
+      )}
       {alert == 2 && (
         <ConfirmAlertBox
           title="Error"
@@ -271,7 +262,7 @@ const Test = () => {
                           }}
                         >
                           <option value="">none</option>
-                          {ModelTypes.map((item, index) => (
+                          {modelTypes.map((item, index) => (
                             <option className="w-32" key={index} value={item}>
                               {item}
                             </option>
@@ -367,11 +358,12 @@ const Test = () => {
                       className="align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 rounded-lg bg-gray-900 text-white shadow-md shadow-gray-900/10 hover:shadow-lg hover:shadow-gray-900/20 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
                       type="button"
                       onClick={handleTrain}
+                      disabled={trainLoading}
                     >
-                      Train
+                      {trainLoading ? "Training..." : "Train"}
                     </button>
                   </div>
-                  {trainResponse && trainResponse.data && (
+                  {!trainError && trainResponse?.data?.message && (
                     <div className="flex flex-col justify-center items-start w-full px-5 mt-4 text-lg">
                       <div>
                         <span className="flex gap-1">Train status: <p className="text-green-600"> {trainResponse.data.message}</p></span>
@@ -428,8 +420,9 @@ const Test = () => {
                       className="align-middle select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 rounded-lg bg-gray-900 text-white shadow-md shadow-gray-900/10 hover:shadow-lg hover:shadow-gray-900/20 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none"
                       type="button"
                       onClick={handleInfer}
+                      disabled={inferenceLoading}
                     >
-                      Get Result
+                      {inferenceLoading ? "Running..." : "Get Result"}
                     </button>
                   </div>
                 </div>
@@ -441,13 +434,16 @@ const Test = () => {
                 <h1 className="text-5xl mb-5">
                   Result
                 </h1>
-                {inferenceResponse && inferenceResponse.data && (
+                {inferenceError && (
+                  <p className="text-xl text-red-600">{inferenceError}</p>
+                )}
+                {!inferenceError && inferenceResponse?.data?.result && (
                   <div className="text-xl">
                     <span className="flex gap-1"><p className="text-blue-500">N:</p> <p>{inferenceResponse.data.result.N}</p></span>
                     <span className="flex gap-1"><p className="text-blue-500">P:</p> <p>{inferenceResponse.data.result.P}</p></span>
                     <span className="flex gap-1"><p className="text-blue-500">K:</p> <p>{inferenceResponse.data.result.K}</p></span>
-                    <span className="flex gap-1"><p className="text-purple-500">MSE:</p> <p>{inferenceResponse.data.result.metrics.mse}</p></span>
-                    <span className="flex gap-1"><p className="text-purple-500">R2:</p> <p>{inferenceResponse.data.result.metrics.r2}</p></span>
+                    <span className="flex gap-1"><p className="text-purple-500">MSE:</p> <p>{inferenceResponse.data.result.metrics?.mse}</p></span>
+                    <span className="flex gap-1"><p className="text-purple-500">R2:</p> <p>{inferenceResponse.data.result.metrics?.r2}</p></span>
                   </div>
                 )}
               </div>

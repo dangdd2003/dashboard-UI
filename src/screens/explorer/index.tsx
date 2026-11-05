@@ -101,7 +101,7 @@ const Explorer = () => {
       const newOrder = prev === 1 ? -1 : prev === -1 ? 0 : 1;
       setModels(
         newOrder !== 0
-          ? [...models].sort((a, b) => newOrder * (a.stars - b.stars))
+          ? [...models].sort((a, b) => newOrder * ((a.stars ?? 0) - (b.stars ?? 0)))
           : originalModels,
       );
       return newOrder;

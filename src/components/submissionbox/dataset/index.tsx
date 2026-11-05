@@ -1,6 +1,5 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import ConfirmAlertBox from "@/components/notification/confirm";
-import useAuth from "@/hooks/useAuth";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { ResourceTypes } from "@/screens/test/ResourceTypes";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -11,7 +10,6 @@ type Props = {
 };
 
 const DatasetSubmissionBox = (props: Props) => {
-  const { auth } = useAuth();
   const { setIsNewModelWindowVisible } = props;
   const [isExit, setIsExit] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
@@ -33,25 +31,21 @@ const DatasetSubmissionBox = (props: Props) => {
   };
 
   const handleSubmit = () => {
-
+    if (!file) return;
+    // `type` is a query parameter, the file a multipart field; the owner comes from the JWT.
+    const form = new FormData();
+    form.append("resource", file);
     fileSubAF({
       axiosInstance: UserDashboardAI,
       method: "post",
-      url: "resources/create",
+      url: "/resources/create",
       requestConfig: {
-        headers: {
-          'Authorization': `Bearer ${auth?.token}`,
-          "Content-Type": "multipart/form-data",
-          // 'Access-Control-Allow-Origin': '*',
-        },
         params: {
           type: fileType,
-          user_id: auth?.userId,
         },
-        data: {
-          resource: file,
-        },
+        data: form,
       },
+      timeoutMs: 600000,
     });
   };
 
@@ -119,15 +113,10 @@ const DatasetSubmissionBox = (props: Props) => {
                 className="hidden"
                 name="images"
                 onChange={onSelectFile}
-                multiple
                 accept="*"
               />
-              {!file
-                ? (
-                  <span className="text-gray-500">
-                    No file(s) selected
-                  </span>
-                )
+              {file
+                ? <span className="text-gray-500">1 file selected</span>
                 : <span>No file chosen</span>}
             </label>
 

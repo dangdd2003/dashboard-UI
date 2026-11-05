@@ -1,7 +1,6 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import EditUserBox from "@/components/editbox/user";
 import ConfirmAlertBox from "@/components/notification/confirm";
-import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { IUser } from "@/interfaces/IUser";
@@ -25,36 +24,31 @@ import {
 import { useEffect, useState } from "react";
 
 const TableUsers = () => {
-  const { auth } = useAuth();
   const [deleteUserResponse, deleteUserError, , deleteUserAF] =
     useAxiosFunction();
 
-  const [updateUserResponse, updateUserError, , updateUserAF] =
-    useAxiosFunction();
+  const [, updateUserError, , updateUserAF] = useAxiosFunction();
+  const [, updateRoleError, , updateRoleAF] = useAxiosFunction();
+  const [updateDone, setUpdateDone] = useState(0);
+  const [originalUserData, setOriginalUserData] = useState<IUser>();
 
   const [showAlert, setShowAlert] = useState(false);
   const [rowToDelete, setRowToDelete] = useState<Row<any> | null>(null);
   const [isEditBoxVisible, setIsEditBoxVisible] = useState(false);
   const [currentUserData, setCurrentUserData] = useState<IUser>();
 
-  const [usersresponse, usersError, userLoading] = useAxios({
+  const [usersresponse, usersError, userLoading, refetchUsers] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/users",
-    requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
-    },
   });
 
   const [data, setData] = useState(usersresponse?.data);
 
   useEffect(() => {
-    if (usersresponse) {
+    if (Array.isArray(usersresponse?.data)) {
       setData(usersresponse.data);
     }
-    console.log(data);
   }, [usersresponse]);
 
   const columns = [
@@ -120,52 +114,66 @@ const TableUsers = () => {
   const handleAlertClose = (value: boolean) => {
     // If the value is true, proceed with the deletion
     if (value && rowToDelete) {
-      console.log(rowToDelete.original.username);
-      setData(data.filter((item: any) => item.id !== rowToDelete.original.id));
+      const target = rowToDelete.original;
       deleteUserAF({
         axiosInstance: UserDashboardAI,
         method: "delete",
-        url: `/users/delete?username=${rowToDelete.original.username}`,
-        requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-        },
+        url: `/users/delete/${target.id}`,
+      }).then((res) => {
+        // 204 No Content on success
+        if (res) setData((prev: IUser[]) => prev.filter((item) => item.id !== target.id));
       });
     }
     // Hide the alert
     setShowAlert(false);
   };
 
-  const handleEditClick = (userData: any) => {
-    setCurrentUserData(userData);
+  const handleEditClick = (userData: IUser) => {
+    // edit a copy so the table row is not mutated before the backend accepts it
+    setOriginalUserData(userData);
+    setCurrentUserData({ ...userData });
     setIsEditBoxVisible(true);
   };
 
-  const handleEditBoxSave = () => {
-    console.log(currentUserData);
-    // make sure nothing is empty
+  const handleEditBoxSave = async () => {
     setIsEditBoxVisible(false);
-    if (currentUserData) {
-      updateUserAF({
+    if (!currentUserData || !originalUserData) return;
+    const { id } = currentUserData;
+
+    // Partial update: only send changed, non-blank fields (null/missing = unchanged).
+    const userDetail: Partial<Pick<IUser, "firstname" | "lastname" | "email">> = {};
+    (["firstname", "lastname", "email"] as const).forEach((field) => {
+      const value = currentUserData[field]?.trim();
+      if (value && value !== originalUserData[field]) userDetail[field] = value;
+    });
+
+    let ok = true;
+    if (Object.keys(userDetail).length > 0) {
+      const res = await updateUserAF({
         axiosInstance: UserDashboardAI,
         method: "put",
-        url: "/users/update?id=" + currentUserData.id,
+        url: "/users/update",
         requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-          data: {
-            roles: currentUserData.role,
-            userDetail: {
-              firstname: currentUserData.firstname,
-              lastname: currentUserData.lastname,
-              email: currentUserData.email,
-            },
-          },
+          params: { id },
+          data: { userDetail },
         },
       });
+      ok = ok && !!res;
     }
+    // Roles are only changed through the admin-only PUT /users/{id}/roles.
+    if (currentUserData.role !== originalUserData.role) {
+      const res = await updateRoleAF({
+        axiosInstance: UserDashboardAI,
+        method: "put",
+        url: `/users/${id}/roles`,
+        requestConfig: {
+          data: { role: currentUserData.role },
+        },
+      });
+      ok = ok && !!res;
+    }
+    if (ok) setUpdateDone((n) => n + 1);
+    refetchUsers();
   };
 
   const formattedCreateTime = (createTime: string) => {
@@ -225,7 +233,7 @@ const TableUsers = () => {
             onClose={handleAlertClose}
           />
         )}
-      {deleteUserResponse?.status == 200 && (
+      {deleteUserResponse?.status == 204 && (
         <ConfirmAlertBox
           title="User Deleted"
           description="User has been deleted successfully"
@@ -239,17 +247,18 @@ const TableUsers = () => {
           onClose={() => setShowAlert(false)}
         />
       )}
-      {updateUserResponse?.status == 202 && (
+      {updateDone > 0 && (
         <ConfirmAlertBox
+          key={updateDone}
           title="User Updated"
           description="User has been updated successfully"
           onClose={() => setIsEditBoxVisible(false)}
         />
       )}
-      {updateUserError && (
+      {(updateUserError || updateRoleError) && (
         <ConfirmAlertBox
           title="User Update Failed"
-          description={`User update has failed: ${updateUserError}`}
+          description={`User update has failed: ${updateUserError || updateRoleError}`}
           onClose={() => setIsEditBoxVisible(false)}
         />
       )}

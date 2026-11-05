@@ -4,6 +4,7 @@ import { useMediaQuery } from "react-responsive";
 import useAxios from "@/hooks/useAxios";
 import useAuth from "@/hooks/useAuth";
 import UserDashboardAI from "@/apis/UserDashboardAI";
+import { BASE_URL_USER } from "@/apis/config";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 
 type EditableFieldProps = {
@@ -13,7 +14,11 @@ type EditableFieldProps = {
   originalValue: string;
   isEditable: boolean;
   setIsEditable: React.Dispatch<React.SetStateAction<boolean>>;
+  onSave: (value: string) => void;
 };
+
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+const PWD_REGEX = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&*()\-+=])(?=\S+$).{8,255}$/;
 
 const DeleteConfirmationPopup: React.FC<
   { onConfirm: () => void; onCancel: () => void }
@@ -48,7 +53,7 @@ const DeleteConfirmationPopup: React.FC<
   };
 
 const EditableField = (
-  { label, value, setValue, originalValue, isEditable, setIsEditable }:
+  { label, value, setValue, originalValue, isEditable, setIsEditable, onSave }:
     EditableFieldProps,
 ) => {
   const onCancel = () => {
@@ -77,15 +82,17 @@ const EditableField = (
             <div>
               <button
                 className="text-blue-500 hover:underline mt-2 disabled:opacity-50 disabled:no-underline"
-                onClick={onToggle}
-                disabled={value.trim() === "" || value === originalValue}
+                onClick={() => {
+                  onSave(value.trim());
+                  setIsEditable(false);
+                }}
+                disabled={!value || value.trim() === "" || value === originalValue}
               >
                 Save
               </button>
               <button
                 className="text-blue-500 hover:underline ml-2 mt-2 disabled:opacity-50 disabled:no-underline"
                 onClick={onCancel}
-                disabled={value.trim() === ""}
               >
                 Cancel
               </button>
@@ -108,7 +115,7 @@ const EditableField = (
 };
 
 const Settings: React.FC = () => {
-  const { auth } = useAuth();
+  const { auth, setAuth } = useAuth();
   const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] =
     useState(false);
   const isBelowSm = useMediaQuery({ query: "(max-width: 640px)" });
@@ -117,27 +124,29 @@ const Settings: React.FC = () => {
   const [isFirstNameEditable, setIsFirstNameEditable] = useState(false);
   const [isLastNameEditable, setIsLastNameEditable] = useState(false);
   const [isEmailEditable, setIsEmailEditable] = useState(false);
-  const [, , , deleteUserAF] =
-    useAxiosFunction();
-  const [, , , uploadAvatarAF] =
-    useAxiosFunction();
+  const [, deleteUserError, , deleteUserAF] = useAxiosFunction();
+  const [, uploadAvatarError, , uploadAvatarAF] = useAxiosFunction();
+  const [, updateUserError, , updateUserAF] = useAxiosFunction();
+  const [, passwordError, , passwordAF] = useAxiosFunction();
+  const [notice, setNotice] = useState("");
 
-
-  const [userResponse] = useAxios({
+  // without `username` the backend returns the caller's own profile
+  const [userResponse, , , refetchUser] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/users/profile?username=" + auth?.userName,
-    requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
-    },
+    url: "/users/profile",
   });
 
   const [avatar, setAvatar] = useState<File | null>(null);
-  const [firstName, setFirstName] = useState(userResponse?.data.firstname);
-  const [lastName, setLastName] = useState(userResponse?.data.lastname);
-  const [email, setEmail] = useState(userResponse?.data.email);
+  const [avatarVersion, setAvatarVersion] = useState(0);
+  const [firstName, setFirstName] = useState<string>(userResponse?.data.firstname ?? "");
+  const [lastName, setLastName] = useState<string>(userResponse?.data.lastname ?? "");
+  const [email, setEmail] = useState<string>(userResponse?.data.email ?? "");
+
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const isNewPasswordValid = PWD_REGEX.test(newPassword);
 
 
   const originalFirstName = userResponse?.data.firstname;
@@ -154,40 +163,75 @@ const Settings: React.FC = () => {
     }
   }, [userResponse]);
 
-  const handleDeleteAccount = () => {
-    // Add logic for deleting the account
-    deleteUserAF({
+  const handleUpdateField = async (
+    field: "firstname" | "lastname" | "email",
+    value: string,
+  ) => {
+    setNotice("");
+    // partial update of the caller's own profile; other fields stay unchanged
+    const res = await updateUserAF({
       axiosInstance: UserDashboardAI,
-      method: "delete",
-      url: `/users/delete?username=${auth?.userName}`,
+      method: "put",
+      url: "/users/update",
       requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
+        data: { userDetail: { [field]: value } },
       },
     });
-    setIsDeleteConfirmationVisible(false);
+    if (res) setNotice("Profile updated");
+    refetchUser();
   };
 
-  const handleSubmitAvatar = () => {
-    console.log(avatar)
-    uploadAvatarAF({
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setNotice("");
+    const res = await passwordAF({
+      axiosInstance: UserDashboardAI,
+      method: "put",
+      url: "/users/update-password",
+      requestConfig: {
+        data: { oldPassword, newPassword },
+      },
+    });
+    if (res) {
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setNotice("Password changed");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleteConfirmationVisible(false);
+    const res = await deleteUserAF({
+      axiosInstance: UserDashboardAI,
+      method: "delete",
+      url: `/users/delete/${auth?.userId}`,
+    });
+    if (res) {
+      // 204: account and all its data are gone, sign out
+      localStorage.removeItem("auth");
+      setAuth(null);
+      window.location.href = "/";
+    }
+  };
+
+  const handleSubmitAvatar = async () => {
+    if (!avatar) return;
+    setNotice("");
+    const form = new FormData();
+    form.append("image", avatar);
+    const res = await uploadAvatarAF({
       axiosInstance: UserDashboardAI,
       method: "post",
       url: `/files/upload-avatar`,
       requestConfig: {
-        headers: {
-          // Authorization: `Bearer ${auth?.token}`,
-          "Content-Type": "multipart/form-data",
-        },
-        params: {
-          user_id: auth?.userId,
-        },
-        data: {
-          image: avatar,
-        },
+        data: form,
       },
     });
+    if (res) {
+      setNotice(res.data?.message ?? "Avatar updated");
+      setAvatarVersion((v) => v + 1);
+    }
     setAvatar(null);
     // reset the avatar input
     // reset the file input
@@ -205,6 +249,12 @@ const Settings: React.FC = () => {
         className={`sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-1/2 ${isBelowSm && "w-full px-10"
           }`}
       >
+        {notice && <p className="mt-5 text-green-600">{notice}</p>}
+        {(updateUserError || uploadAvatarError || passwordError || deleteUserError) && (
+          <p className="mt-5 text-red-600">
+            {updateUserError || uploadAvatarError || passwordError || deleteUserError}
+          </p>
+        )}
         <div className="my-5">
           <label htmlFor="avatar" className="block text-lg font-medium text-gray-700 mb-2">Avatar</label>
           <input
@@ -212,11 +262,23 @@ const Settings: React.FC = () => {
             ref={fileInputRef}
             name="avatar"
             id="avatar"
-            accept="image/*"
+            accept="image/png,image/jpeg"
             className="border-2 rounded-lg p-2 hover:bg-gray-900 hover:text-white"
-            onChange={(e) => setAvatar(e.target.files![0])}
+            onChange={(e) => setAvatar(e.target.files?.[0] ?? null)}
           />
-          {avatar && (
+          {auth?.userId && (
+            <img
+              key={avatarVersion}
+              src={`${BASE_URL_USER}files/get-avatar?id=${auth.userId}&v=${avatarVersion}`}
+              alt=""
+              className="mt-3 w-20 h-20 rounded-full object-cover"
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
+          )}
+          {avatar && avatar.size > AVATAR_MAX_BYTES && (
+            <p className="text-sm text-red-500">The avatar must be at most 5 MiB</p>
+          )}
+          {avatar && avatar.size <= AVATAR_MAX_BYTES && (
             <button onClick={handleSubmitAvatar} className="ml-5 my-4 px-4 py-2 bg-blue-500 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">Submit</button>
           )}
         </div>
@@ -224,6 +286,7 @@ const Settings: React.FC = () => {
         {/* Editable first name */}
         <EditableField
           label="First Name"
+          onSave={(v) => handleUpdateField("firstname", v)}
           value={firstName}
           setValue={setFirstName}
           originalValue={originalFirstName}
@@ -234,6 +297,7 @@ const Settings: React.FC = () => {
         {/* Editable last name */}
         <EditableField
           label="Last Name"
+          onSave={(v) => handleUpdateField("lastname", v)}
           value={lastName}
           setValue={setLastName}
           originalValue={originalLastName}
@@ -244,6 +308,7 @@ const Settings: React.FC = () => {
         {/* Editable email settings */}
         <EditableField
           label="Email"
+          onSave={(v) => handleUpdateField("email", v)}
           value={email}
           setValue={setEmail}
           originalValue={originalEmail}
@@ -252,6 +317,48 @@ const Settings: React.FC = () => {
         />
         {/* </div> */}
         {/* )} */}
+
+        {/* Password change */}
+        <form className="mb-6" onSubmit={handleChangePassword}>
+          <h3 className="text-xl font-semibold mb-2">Change Password</h3>
+          <input
+            type="password"
+            placeholder="Current password"
+            autoComplete="current-password"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            className="w-full px-4 py-2 mb-2 border rounded-md"
+          />
+          <input
+            type="password"
+            placeholder="New password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full px-4 py-2 mb-2 border rounded-md"
+          />
+          <input
+            type="password"
+            placeholder="Confirm new password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full px-4 py-2 mb-2 border rounded-md"
+          />
+          {newPassword && !isNewPasswordValid && (
+            <p className="text-sm text-red-500">
+              8-255 characters, no spaces, with an uppercase letter, a lowercase letter, a digit
+              and one of @#$%^&amp;*()-+=
+            </p>
+          )}
+          <button
+            type="submit"
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!oldPassword || !isNewPasswordValid || newPassword !== confirmPassword}
+          >
+            Change Password
+          </button>
+        </form>
 
         {/* Account deletion */}
         <div>

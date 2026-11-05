@@ -21,7 +21,7 @@ const UserProfile = () => {
   const [response] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/users/profile?username=" + username,
+    url: username ? "/users/profile?username=" + encodeURIComponent(username) : "",
     requestConfig: {
       headers: {
         Authorization: `Bearer ${auth?.token}`,

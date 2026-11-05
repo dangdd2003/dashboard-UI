@@ -1,12 +1,11 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
+import { getErrorMessage, getErrorStatus } from "@/apis/errors";
 import Container from "@/components/container";
 import NewRatingBox from "@/components/editbox/rating";
 import Inference from "@/components/models/inference";
 import ConfirmAlertBox from "@/components/notification/confirm";
 import RatingsSection from "@/components/ratings";
-import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
-import useAxiosFunction from "@/hooks/useAxiosFunction";
 import useTestId from "@/hooks/useTestId";
 import { IModel } from "@/interfaces/IModel.tsx";
 import { StarIcon } from "@heroicons/react/16/solid";
@@ -23,25 +22,16 @@ const ModelDetail = () => {
 };
 
 const ModelDetailContent = ({ modelId }: { modelId: string }) => {
-  const { auth } = useAuth();
   const { ids, setIds } = useTestId();
 
-  const [modelResponse] = useAxios({
+  const [modelResponse, modelError, , refetchModel] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/models/" + modelId,
-    requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
-    },
   });
 
-  const [newRatingResponse, newRatingError, , newRatingAF] =
-    useAxiosFunction();
-
   useEffect(() => {
-    if (modelResponse?.data) {
+    if (modelResponse?.status === 200) {
       setModel(modelResponse.data);
     }
   }, [modelResponse]);
@@ -73,30 +63,37 @@ const ModelDetailContent = ({ modelId }: { modelId: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const handleNewRatingSubmit = () => {
-    // Update the user's rating
-    console.log(userRatingStars);
-    console.log(userComment);
-    newRatingAF({
-      axiosInstance: UserDashboardAI,
-      method: "post",
-      url: "/ratings/create",
-      requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
-        data: {
-          modelId: model.id,
-          stars: userRatingStars,
-          comment: userComment,
-        },
-        params: {
-          model_id: model.id,
-          user_id: auth?.userId,
-        },
-      },
-    });
+  const [ratingNotice, setRatingNotice] = useState<{ title: string; text: string } | null>(null);
+  const [ratingsVersion, setRatingsVersion] = useState(0);
+
+  const handleNewRatingSubmit = async () => {
     setIsRatingBoxVisible(false);
+    if (!userRatingStars) {
+      setRatingNotice({ title: "Error", text: "Please choose 1 to 5 stars" });
+      return;
+    }
+    // The rating belongs to the caller (from the JWT); one rating per user per model.
+    const body = { stars: userRatingStars, comment: userComment ?? undefined };
+    const params = { model_id: model.id };
+    try {
+      await UserDashboardAI.post("/ratings/create", body, { params });
+      setRatingNotice({ title: "Success", text: "Your rating has been submitted successfully" });
+    } catch (err) {
+      if (getErrorStatus(err) !== 409) {
+        setRatingNotice({ title: "Error", text: getErrorMessage(err) });
+        return;
+      }
+      // 409: already rated by the caller -> update the existing rating instead
+      try {
+        await UserDashboardAI.put("/ratings/update", body, { params });
+        setRatingNotice({ title: "Success", text: "Your rating has been updated" });
+      } catch (updateErr) {
+        setRatingNotice({ title: "Error", text: getErrorMessage(updateErr) });
+        return;
+      }
+    }
+    setRatingsVersion((v) => v + 1);
+    refetchModel();
   };
 
   const formattedCreateTime = model.createTime
@@ -113,20 +110,14 @@ const ModelDetailContent = ({ modelId }: { modelId: string }) => {
   };
   return (
     <Container>
-      {newRatingError === "Request failed with status code 400" && (
+      {ratingNotice && (
         <ConfirmAlertBox
-          title="Error"
-          description="You have already rated this model"
-          onClose={() => { }}
+          title={ratingNotice.title}
+          description={ratingNotice.text}
+          onClose={() => setRatingNotice(null)}
         />
       )}
-      {newRatingResponse && newRatingResponse.status === 201 && (
-        <ConfirmAlertBox
-          title="Success"
-          description="Your rating has been submitted successfully"
-          onClose={() => { }}
-        />
-      )}
+      {modelError && <p className="text-red-500 mt-10">{modelError}</p>}
       <div className="mx-auto p-6 rounded-md mt-10 w-3/4">
         <div className="mb-8 pb-2 border-b border-gray-300">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">{model.name}</h1>
@@ -189,7 +180,7 @@ const ModelDetailContent = ({ modelId }: { modelId: string }) => {
           </h2>
           <div className="mt-4 text-gray-800 leading-relaxed wrap-break-word font-thin">
             <p>Type: {model.type}</p>
-            <p>Stars: {model.stars}</p>
+            <p>Stars: {model.stars != null ? model.stars.toFixed(1) : "No ratings yet"}</p>
             <p>Usage: {model.usageCount}</p>
             <p>Created Time: {formattedCreateTime}</p>
           </div>
@@ -237,7 +228,7 @@ const ModelDetailContent = ({ modelId }: { modelId: string }) => {
         {/* {model.id && <Inference modelId={model.id} />} */}
 
         {/* Comment Section */}
-        {model.id && <RatingsSection modelId={model.id} />}
+        {model.id && <RatingsSection key={ratingsVersion} modelId={model.id} />}
       </div>
     </Container>
   );

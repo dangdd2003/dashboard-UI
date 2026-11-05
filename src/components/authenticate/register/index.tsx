@@ -7,7 +7,9 @@ const Register = () => {
   const userRef = useRef<HTMLInputElement>(null);
 
   const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
-  const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
+  // Same policy as the backend's PasswordValidator: 8-255 characters, no whitespace,
+  // at least one lowercase, uppercase, digit and one special character from @#$%^&*()-+=
+  const PWD_REGEX = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&*()\-+=])(?=\S+$).{8,255}$/;
   const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
   const [username, setUsername] = useState("");
@@ -70,16 +72,6 @@ const Register = () => {
         },
       },
     });
-    if (response) {
-      if (response.status === 201) {
-        setUsername("");
-        setPassword("");
-        setConfirmPassword("");
-        setEmail("");
-        setFirstName("");
-        setLastName("");
-      }
-    }
   };
 
   return (
@@ -140,9 +132,9 @@ const Register = () => {
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
             <p className="p-1 text-sm text-gray-300 rounded-md">
-              Must contains atleast 8 characters <br />
-              Must contains atleast one: uppercase letter, lowercase letter,
-              number, special character.
+              Must contain 8 to 255 characters and no spaces <br />
+              Must contain at least one: uppercase letter, lowercase letter,
+              number and special character (@#$%^&amp;*()-+=).
             </p>
           </div>
         )}
@@ -233,11 +225,15 @@ const Register = () => {
           autoComplete="off"
           onChange={(e) => setLastName(e.target.value)}
         />
-        {response && (
+        {(error || response.status === 201) && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
             <p className="p-1 text-sm text-gray-300 rounded-md">
-              {response.status === 201 ? "Successfully registered" : error}
+              {error
+                ? error.startsWith("409")
+                  ? "Username already exists"
+                  : error
+                : "Successfully registered, you can now sign in"}
             </p>
           </div>
         )}

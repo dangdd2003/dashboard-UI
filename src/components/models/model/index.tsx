@@ -90,7 +90,7 @@ const Model = ({ model, onEdit, onDelete, onDownload, isOwner }: Props) => {
             <div className="flex flex-col">
               <h1 className="text-2xl font-bold">{model.name}</h1>
               <p className="text-sm">Type: {model.type}</p>
-              <p className="text-sm">Star: {model.stars}</p>
+              <p className="text-sm">Star: {model.stars != null ? model.stars.toFixed(1) : "-"}</p>
               <p className="text-sm">Owner: {model.username}</p>
             </div>
           </div>

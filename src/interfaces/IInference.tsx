@@ -5,6 +5,6 @@ export interface IInference {
   firstname: string;
   lastname: string;
   model_id: number;
-  resource_id: number;
+  resource_id: number | null;
   createTime: string;
 }

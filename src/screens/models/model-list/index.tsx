@@ -14,6 +14,8 @@ import useAuth from "@/hooks/useAuth";
 import Model from "@/components/models/model";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import ConfirmAlertBox from "@/components/notification/confirm";
+import { baseName, downloadFile } from "@/apis/download";
+import { getErrorMessage } from "@/apis/errors";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 
 type Props = {
@@ -29,11 +31,8 @@ const Models = ({ userID }: Props) => {
   const [modelsResponse, modelsError] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/models/models-by-user/",
+    url: "/models/models-by-user",
     requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
       params: {
         user_id: userID,
       },
@@ -53,7 +52,6 @@ const Models = ({ userID }: Props) => {
     modelEditAF,
   ] = useAxiosFunction();
 
-  const [modelDownResponse, , , modelDownAF] = useAxiosFunction();
 
   const [models, setModels] = useState<IModel[]>(modelsResponse?.data);
   const [originalModels, setOriginalModels] = useState<IModel[]>(
@@ -67,7 +65,7 @@ const Models = ({ userID }: Props) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (modelsResponse?.data) {
+    if (Array.isArray(modelsResponse?.data)) {
       setModels(modelsResponse.data);
       setOriginalModels(modelsResponse.data);
     }
@@ -144,95 +142,64 @@ const Models = ({ userID }: Props) => {
   };
 
   const handleEdit = (model: IModel) => {
-    console.log(model);
+    // Partial update: null/missing fields are left unchanged, `name` must not be blank.
     modelEditAF({
       axiosInstance: UserDashboardAI,
       method: "put",
       url: "/models/update",
       requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
         params: {
           id: model.id
         },
         data: {
-          name: model.name,
-          description: model.description,
+          name: model.name?.trim() ? model.name.trim() : null,
+          description: model.description ?? null,
         }
+      }
+    }).then((res) => {
+      if (res?.data) {
+        const updated = res.data as IModel;
+        setModels((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+        setOriginalModels((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
       }
     })
   };
 
   const handleDelete = (model: IModel) => {
-    setModels(models.filter((m) => m.id !== model.id));
-    console.log(model);
     modelDeleteAF({
       axiosInstance: UserDashboardAI,
       method: "delete",
       url: "/models/delete/" + model.id,
-      requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
-      },
+    }).then((res) => {
+      if (res) {
+        setModels((prev) => prev.filter((m) => m.id !== model.id));
+        setOriginalModels((prev) => prev.filter((m) => m.id !== model.id));
+      }
     });
   };
 
-  const handleDownload = (model: IModel) => {
-    console.log(model);
-    setHasDownloaded(false);
-    modelDownAF({
-      axiosInstance: UserDashboardAI,
-      method: "get",
-      url: "/files/get-model",
-      requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
-        params: {
-          model_id: model.id,
-          user_id: userID,
-        },
-      },
-    });
-  }
+  const [downloadError, setDownloadError] = useState("");
 
-  const [hasDownloaded, setHasDownloaded] = useState(false);
-
-  useEffect(() => {
-    if (modelDownResponse && modelDownResponse.data && !hasDownloaded) {
-      setHasDownloaded(true);
-
-      // Create a Blob from the content
-      const blob = new Blob([modelDownResponse.data], { type: 'text/plain' });
-
-      // Create a URL for the Blob
-      const url = URL.createObjectURL(blob);
-
-      // Create a link element
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'model.py'; // Set the file name
-
-      // Append the link to the body
-      document.body.appendChild(link);
-
-      // Programmatically click the link to download the file
-      link.click();
-
-      // Remove the link from the body
-      document.body.removeChild(link);
-      setHasDownloaded(false);
+  const handleDownload = async (model: IModel) => {
+    setDownloadError("");
+    try {
+      await downloadFile(
+        UserDashboardAI,
+        "/files/get-model",
+        { model_id: model.id },
+        baseName(model.filepath),
+      );
+    } catch (err) {
+      setDownloadError(getErrorMessage(err));
     }
-  }, [modelDownResponse, hasDownloaded]);
+  };
 
   const handleStarsSort = () => {
     setSortOrder((prev) => {
       const newOrder = prev === 1 ? -1 : prev === -1 ? 0 : 1;
       setModels(
         newOrder !== 0
-          ? [...models].sort((a, b) => newOrder * (a.stars - b.stars))
+          ? [...models].sort((a, b) => newOrder * ((a.stars ?? 0) - (b.stars ?? 0)))
           : originalModels,
       );
       return newOrder;
@@ -263,11 +230,19 @@ const Models = ({ userID }: Props) => {
       {modelDeleteError && (
         <ConfirmAlertBox
           title="Error"
-          description="Something went wrong"
+          description={modelDeleteError}
           onClose={() => setAlert(0)}
         />
       )}
-      {modelEditResponse.status == 202 && (
+      {downloadError && (
+        <ConfirmAlertBox
+          key={downloadError}
+          title="Download Failed"
+          description={downloadError}
+          onClose={() => setDownloadError("")}
+        />
+      )}
+      {modelEditResponse.status == 200 && !modelEditError && (
         <ConfirmAlertBox
           title="Model Updated"
           description="Model has been updated"
@@ -277,7 +252,7 @@ const Models = ({ userID }: Props) => {
       {modelEditError && (
         <ConfirmAlertBox
           title="Error"
-          description="Something went wrong"
+          description={modelEditError}
           onClose={() => setAlert(0)}
         />
       )}

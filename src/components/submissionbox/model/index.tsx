@@ -1,22 +1,24 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import ConfirmAlertBox from "@/components/notification/confirm";
-import useAuth from "@/hooks/useAuth";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
+
+const TYPE_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
+const MODEL_FILE_REGEX = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
 
 type Props = {
   setIsNewModelWindowVisible: (isVisible: boolean) => void;
 };
 
 const ModelSubmissionBox = (props: Props) => {
-  const { auth } = useAuth();
   const { setIsNewModelWindowVisible } = props;
   const [isExit, setIsExit] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileTitle] = useState<string>("");
   const [fileDescription, setFileDescription] = useState<string>("");
-  const [fileType, setFileType] = useState<string>("");
+  // Only "MPAP" models can be trained / run by the ML endpoints today.
+  const [fileType, setFileType] = useState<string>("MPAP");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileSubRes, fileSubErr, , fileSubAF] =
     useAxiosFunction();
@@ -38,30 +40,31 @@ const ModelSubmissionBox = (props: Props) => {
     }
   };
 
+  // Backend rules (dashboard-user 2.0):
+  // - type must match [A-Za-z0-9_-]{1,64}
+  // - the model file's base name must match [A-Za-z0-9][A-Za-z0-9_-]{0,127},
+  //   because the ML service locates a model by /model/{owner}/{type}/{name}
+  const isValidType = TYPE_REGEX.test(fileType);
+  const fileBaseName = file ? file.name.replace(/\.[^.]*$/, "") : "";
+  const isValidFileName = !file || MODEL_FILE_REGEX.test(fileBaseName);
+
   const handleSubmit = () => {
-    console.log(fileName);
-    console.log(fileDescription);
-    console.log(file);
+    if (!file) return;
+    // name, type and description are multipart form fields next to the file,
+    // the owner is taken from the JWT.
+    const form = new FormData();
+    form.append("model", file);
+    form.append("name", fileName.trim());
+    form.append("type", fileType.trim());
+    if (fileDescription.trim()) form.append("description", fileDescription);
     fileSubAF({
       axiosInstance: UserDashboardAI,
       method: "post",
-      url: "models/create",
+      url: "/models/create",
       requestConfig: {
-        headers: {
-          // 'Authorization': `Bearer ${auth?.token}`,
-          "Content-Type": "multipart/form-data",
-          // 'Access-Control-Allow-Origin': '*',
-        },
-        params: {
-          user_id: auth?.userId,
-          name: fileName,
-          description: fileDescription,
-          type: fileType,
-        },
-        data: {
-          model: file,
-        },
+        data: form,
       },
+      timeoutMs: 600000,
     });
   };
 
@@ -71,7 +74,7 @@ const ModelSubmissionBox = (props: Props) => {
         <ConfirmAlertBox title="Model Submitted" description="Your model has been submitted successfully" onClose={() => setIsNewModelWindowVisible(false)} />
       )}
       {fileSubErr && (
-        <ConfirmAlertBox title="Resource Submission Failed" description={`Your resource submission has failed: ${fileSubErr}`} onClose={() => setIsNewModelWindowVisible(false)} />
+        <ConfirmAlertBox title="Model Submission Failed" description={`Your model submission has failed: ${fileSubErr}`} onClose={() => setIsNewModelWindowVisible(false)} />
       )}
       {isExit && (
         <ConfirmAlertBox title="Exit" description="Are you sure you want to exit?" onClose={() => setIsNewModelWindowVisible(false)} />
@@ -120,7 +123,7 @@ const ModelSubmissionBox = (props: Props) => {
                   or drag and drop
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  .py (MAX. 10GB)
+                  .py / .pkl (max. 100 MB), file name: letters, digits, _ and -
                 </p>
               </div>
               <input
@@ -130,7 +133,7 @@ const ModelSubmissionBox = (props: Props) => {
                 className="hidden"
                 name="images"
                 onChange={onSelectFile}
-                accept=".py"
+                accept=".py,.pkl,.joblib"
               />
               {file
                 ? (
@@ -175,6 +178,7 @@ const ModelSubmissionBox = (props: Props) => {
                   <div className="relative w-full min-w-[200px] h-11">
                     <input
                       id="model-type"
+                      value={fileType}
                       onChange={(e) => setFileType(e.target.value)}
                       className="w-full h-full px-3 py-3 font-sans text-sm font-normal transition-all bg-transparent border rounded-md peer text-blue-gray-700 outline-solid outline-0 focus:outline-0 disabled:bg-blue-gray-50 disabled:border-0 placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 border-t-transparent focus:border-t-transparent border-blue-gray-200 focus:border-gray-900"
                       placeholder=" "
@@ -204,11 +208,22 @@ const ModelSubmissionBox = (props: Props) => {
                 {/*     ))} */}
                 {/*   </select> */}
                 {/* </div> */}
+                {!isValidType && (
+                  <p className="text-sm text-red-500 text-center">
+                    Model type may only contain letters, digits, "_" and "-" (max. 64), e.g. MPAP
+                  </p>
+                )}
+                {!isValidFileName && (
+                  <p className="text-sm text-red-500 text-center">
+                    The file name "{fileBaseName}" is not accepted: it must start with a letter or
+                    digit and contain only letters, digits, "_" and "-"
+                  </p>
+                )}
                 <div className="flex justify-center items-center w-full gap-3 ">
                   <button
                     onClick={handleSubmit}
                     className="my-4 px-4 py-2 bg-blue-500 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
-                    disabled={!fileName || !fileDescription || !file}
+                    disabled={!fileName.trim() || !file || !isValidType || !isValidFileName}
                   >
                     Submit
                   </button>

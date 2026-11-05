@@ -1,5 +1,7 @@
 // Login.tsx
 import SecurityDashboardAI from "@/apis/SecurityDashboardAI";
+import UserDashboardAI from "@/apis/UserDashboardAI";
+import { getErrorMessage } from "@/apis/errors";
 import useAuth from "@/hooks/useAuth";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
@@ -18,21 +20,41 @@ const Login = () => {
     userRef.current?.focus();
   }, []);
 
+  const [profileError, setProfileError] = useState("");
+
   useEffect(() => {
-    if (response) {
-      const accessToken = response?.data;
-      if (accessToken) {
+    const accessToken = response?.data;
+    if (response?.status !== 200 || typeof accessToken !== "string" || !accessToken) {
+      return;
+    }
+    // The JWT is encrypted (JWE), so the user id and role cannot be read from it.
+    // Load them from the profile of the caller instead.
+    let cancelled = false;
+    UserDashboardAI.get("/users/profile", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((res) => {
+        if (cancelled) return;
         setAuth({
           token: accessToken,
-          userName: username,
+          userName: res.data.username ?? username,
+          userId: String(res.data.id),
+          role: res.data.role,
         });
         navigate("/home");
-      }
-    }
+      })
+      .catch((err) => {
+        if (!cancelled) setProfileError(getErrorMessage(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setProfileError("");
     const authString = "Basic " + btoa(username + ":" + password);
     axiosFetch({
       axiosInstance: SecurityDashboardAI,
@@ -42,6 +64,7 @@ const Login = () => {
         headers: {
           Authorization: authString,
         },
+        responseType: "text",
       },
     });
   };
@@ -74,11 +97,15 @@ const Login = () => {
           placeholder="password"
           onChange={(e) => setPassword(e.target.value)}
         />
-        {response && (
+        {(error || profileError || response.status === 200) && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
             <p className="p-1 text-sm text-gray-300 rounded-md">
-              {response.status === 200 ? "Successfully login" : error}
+              {error
+                ? error.startsWith("401")
+                  ? "Wrong username or password"
+                  : error
+                : profileError || "Successfully login"}
             </p>
           </div>
         )}

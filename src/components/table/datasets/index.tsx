@@ -1,5 +1,7 @@
 import type { JSX } from "react";
 import UserDashboardAI from "@/apis/UserDashboardAI";
+import { downloadFile } from "@/apis/download";
+import { getErrorMessage } from "@/apis/errors";
 import ConfirmAlertBox from "@/components/notification/confirm";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
@@ -48,11 +50,8 @@ const TableDatasets = ({ userId }: Props) => {
   const [datasetsResponse, datasetsError] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/resources/user_id/",
+    url: "/resources/user_id",
     requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
       params: {
         user_id: userId,
       },
@@ -60,12 +59,11 @@ const TableDatasets = ({ userId }: Props) => {
   });
 
   const [deleteResponse, deleteError, , deleteAF] = useAxiosFunction();
-  const [downloadResponse, , , downloadAF] = useAxiosFunction();
 
   const [data, setData] = useState<IDataset[]>(datasetsResponse?.data);
 
   useEffect(() => {
-    if (datasetsResponse) {
+    if (datasetsResponse?.status === 200) {
       const dataArray = Array.isArray(datasetsResponse.data)
         ? datasetsResponse.data
         : [datasetsResponse.data];
@@ -172,71 +170,32 @@ const TableDatasets = ({ userId }: Props) => {
     setShowAlert(1);
   };
 
-  const [hasDownloaded, setHasDownloaded] = useState(false);
-
-  const handleDownload = (row: any) => {
-    setHasDownloaded(false);
-    downloadAF({
-      axiosInstance: UserDashboardAI,
-      method: "get",
-      url: `/files/get-resource`,
-      requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
-        params: {
-          resource_id: row.original.id,
-          user_id: userId,
-        },
-      },
-    });
-  }
-
-  useEffect(() => {
-    if (downloadResponse && downloadResponse.data && !hasDownloaded) {
-      setHasDownloaded(true);
-
-      // Convert the data to a JSON string
-      const jsonString = JSON.stringify(downloadResponse.data);
-      const filename = formatFilePath(downloadResponse.data.filepath)
-
-      // Create a Blob from the JSON string
-      const blob = new Blob([jsonString], { type: 'application/json' });
-
-      // Create a URL for the Blob
-      const url = URL.createObjectURL(blob);
-
-      // Create a link element
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename; // Set the file name
-
-      // Append the link to the body
-      document.body.appendChild(link);
-
-      // Programmatically click the link to download the file
-      link.click();
-
-      // Remove the link from the body
-      document.body.removeChild(link);
-      setHasDownloaded(false);
+  const [downloadError, setDownloadError] = useState("");
+  const handleDownload = async (row: any) => {
+    setDownloadError("");
+    try {
+      await downloadFile(
+        UserDashboardAI,
+        "/files/get-resource",
+        { resource_id: row.original.id },
+        formatFilePath(row.original.filepath),
+      );
+    } catch (err) {
+      setDownloadError(getErrorMessage(err));
     }
-  }, [downloadResponse, hasDownloaded]);
+  };
 
 
   const handleDeleteAlertClose = (value: boolean) => {
     // If the value is true, proceed with the deletion
     if (value && rowToDelete) {
-      setData(data.filter((item: any) => item.id !== rowToDelete.original.id));
+      const targetId = rowToDelete.original.id;
       deleteAF({
         axiosInstance: UserDashboardAI,
         method: "delete",
-        url: `/resources/delete/${rowToDelete.original.id}`,
-        requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-        },
+        url: `/resources/delete/${targetId}`,
+      }).then((res) => {
+        if (res) setData((prev) => prev.filter((item) => item.id !== targetId));
       });
     }
     // Hide the alert
@@ -269,6 +228,14 @@ const TableDatasets = ({ userId }: Props) => {
 
   return (
     <div className="xl:ml-0 lg:ml-36 md:ml-60 w-full">
+      {downloadError && (
+        <ConfirmAlertBox
+          key={downloadError}
+          title="Download Failed"
+          description={downloadError}
+          onClose={() => setDownloadError("")}
+        />
+      )}
       {datasetsError && (
         <div className="text-red-500">
           <p>{datasetsError}</p>

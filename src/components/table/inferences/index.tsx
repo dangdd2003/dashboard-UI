@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 import UserDashboardAI from "@/apis/UserDashboardAI";
+import { parseInferenceResult } from "@/apis/inference";
 import ConfirmAlertBox from "@/components/notification/confirm";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
@@ -39,10 +40,10 @@ const TableInferences = ({ userId }: Props) => {
   })
 
   const [inferenceDelRes, inferenceDelErr, , inferenceDelAF] = useAxiosFunction();
-  const [data, setData] = useState<IInference[]>(inferencesRes)
+  const [data, setData] = useState<IInference[]>([])
 
   useEffect(() => {
-    if (inferencesRes?.data) {
+    if (inferencesRes?.status === 200) {
       const dataArray = Array.isArray(inferencesRes.data)
         ? inferencesRes.data
         : [inferencesRes.data];
@@ -68,7 +69,7 @@ const TableInferences = ({ userId }: Props) => {
           return <div>No result</div>;
         }
 
-        const parsedResult = JSON.parse(resultString);
+        const parsedResult = parseInferenceResult(resultString);
         const { message, result } = parsedResult || {};
         const { K, N, P, metrics } = result || {};
         const { mse, r2 } = metrics || {};
@@ -121,16 +122,18 @@ const TableInferences = ({ userId }: Props) => {
   }
 
   const handleDelete = () => {
-    setData(data.filter((item) => item.id !== row.original.id))
+    const targetId = row.original.id
     inferenceDelAF({
       axiosInstance: UserDashboardAI,
       method: "delete",
       url: `/inferences/delete/${row.original.id}`,
       requestConfig: {
         headers: {
-          Authorization: `Bearer ${auth?.token} `
+          Authorization: `Bearer ${auth?.token}`
         },
       }
+    }).then((res) => {
+      if (res) setData((prev) => prev.filter((item) => item.id !== targetId))
     })
     setAlert(2);
   }

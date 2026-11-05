@@ -40,11 +40,14 @@ const EditUserBox: React.FC<EditUserBoxProps> = (
         </label>
         <label className="block mt-2 w-full ml-5">
           Role:
-          <input
+          <select
             className="ml-12 p-2 rounded-sm bg-white text-black border w-5/6"
-            placeholder={userData.role}
+            defaultValue={userData.role}
             onChange={(e) => userData.role = e.target.value}
-          />
+          >
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
         </label>
         <div className="flex gap-4 my-2">
           <button
