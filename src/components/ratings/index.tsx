@@ -1,9 +1,10 @@
+import { BASE_URL_USER } from "@/apis/config";
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import { IRating } from "@/interfaces/IRating";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 type Props = {
   modelId: number;
@@ -11,7 +12,7 @@ type Props = {
 
 const RatingsSection = ({ modelId }: Props) => {
   const { auth } = useAuth();
-  const [ratingsResponse, ratingsError, ratingsLoading, ratingsRefetch] =
+  const [ratingsResponse, ratingsError, ratingsLoading] =
     useAxios({
       axiosInstance: UserDashboardAI,
       method: "get",
@@ -53,7 +54,7 @@ const RatingsSection = ({ modelId }: Props) => {
                 <div className="flex flex-row">
                   <div className="flex justify-center items-center">
                     <img
-                      src={`http://localhost:8081/files/get-avatar?id=${rating.user_id}`}
+                      src={`${BASE_URL_USER}files/get-avatar?id=${rating.user_id}`}
                       alt=""
                       className="w-12 h-12 rounded-full mr-4"
                     />

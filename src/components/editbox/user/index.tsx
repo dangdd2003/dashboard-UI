@@ -11,13 +11,13 @@ const EditUserBox: React.FC<EditUserBoxProps> = (
   { userData, handleEditBoxSave, setIsEditBoxVisible },
 ) => (
   <div>
-    <div className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-15 z-40">
+    <div className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black/15 z-40">
       <div className="border rounded-lg bg-white w-1/2 h-1/2 p-2 flex flex-col items-center justify-center">
         <h1 className="text-5xl my-2 font-bold mb-4">Edit User</h1>
         <label className="block mt-2 w-full ml-5">
           First Name:
           <input
-            className="ml-2 p-2 rounded bg-white text-black border w-5/6"
+            className="ml-2 p-2 rounded-sm bg-white text-black border w-5/6"
             placeholder={userData.firstname}
             onChange={(e) => userData.firstname = e.target.value}
           />
@@ -25,7 +25,7 @@ const EditUserBox: React.FC<EditUserBoxProps> = (
         <label className="block mt-2 w-full ml-5">
           Last Name:
           <input
-            className="ml-2 p-2 rounded bg-white text-black border w-5/6"
+            className="ml-2 p-2 rounded-sm bg-white text-black border w-5/6"
             placeholder={userData.lastname}
             onChange={(e) => userData.lastname = e.target.value}
           />
@@ -33,7 +33,7 @@ const EditUserBox: React.FC<EditUserBoxProps> = (
         <label className="block mt-2 w-full ml-5">
           Email:
           <input
-            className="ml-11 p-2 rounded bg-white text-black border w-5/6"
+            className="ml-11 p-2 rounded-sm bg-white text-black border w-5/6"
             placeholder={userData.email}
             onChange={(e) => userData.email = e.target.value}
           />
@@ -41,7 +41,7 @@ const EditUserBox: React.FC<EditUserBoxProps> = (
         <label className="block mt-2 w-full ml-5">
           Role:
           <input
-            className="ml-12 p-2 rounded bg-white text-black border w-5/6"
+            className="ml-12 p-2 rounded-sm bg-white text-black border w-5/6"
             placeholder={userData.role}
             onChange={(e) => userData.role = e.target.value}
           />

@@ -7,7 +7,7 @@ import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { IModel } from "@/interfaces/IModel";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router";
 import { ModelTypes } from "./ModelTypes";
 import { IDataset } from "@/interfaces/IDataset";
 import useTestId from "@/hooks/useTestId";
@@ -22,15 +22,15 @@ const Test = () => {
   const [alert, setAlert] = useState<number>(0);
   const [selectedModelType, setSelectedModelType] = useState<string>("");
 
-  const [selectedModelId, setSelectedModelId] = useState<number>();
+  const [selectedModelId, setSelectedModelId] = useState<number | string>();
 
   const [pcaDimensionTrain, setPcaDimensionTrain] = useState<number>(0);
   const [pcaDimensionInference, setPcaDimensionInference] = useState<number>(0);
 
-  const [trainResponse, trainError, trainLoading, trainAF] = useAxiosFunction();
-  const [inferenceResponse, inferenceError, inferenceLoading, inferenceAF] = useAxiosFunction();
+  const [trainResponse, trainError, , trainAF] = useAxiosFunction();
+  const [inferenceResponse, , , inferenceAF] = useAxiosFunction();
 
-  const [modelsResponse, modelsError, modelsLoading, modelsRefetch] = useAxios({
+  const [modelsResponse] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/models/models-by-user",
@@ -47,9 +47,6 @@ const Test = () => {
 
   const [
     resourcesResponse,
-    resourcesError,
-    resourcesLoading,
-    resourcesRefetch,
   ] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
@@ -62,7 +59,7 @@ const Test = () => {
     },
   });
 
-  const [modelResponse, modelError, modelLoading, modelAF] = useAxiosFunction();
+  const [modelResponse, , , modelAF] = useAxiosFunction();
 
   useEffect(() => {
     if (modelId) {
@@ -81,7 +78,7 @@ const Test = () => {
   }, [modelId]);
 
   const [models, setModels] = useState<IModel[]>(modelsResponse?.data || []);
-  const [resources, setResources] = useState<IDataset[]>(
+  const [, setResources] = useState<IDataset[]>(
     resourcesResponse?.data || [],
   );
 

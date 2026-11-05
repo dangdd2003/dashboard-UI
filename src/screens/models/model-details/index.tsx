@@ -12,17 +12,21 @@ import { IModel } from "@/interfaces/IModel.tsx";
 import { StarIcon } from "@heroicons/react/16/solid";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router";
 
 const ModelDetail = () => {
   const { modelId } = useParams();
-  const { auth } = useAuth();
-  const { ids, setIds } = useTestId();
   if (!modelId) {
     return <div className="text-red-500">MODELID not found</div>;
   }
+  return <ModelDetailContent modelId={modelId} />;
+};
 
-  const [modelResponse, modelError, modelLoading, modelRefetch] = useAxios({
+const ModelDetailContent = ({ modelId }: { modelId: string }) => {
+  const { auth } = useAuth();
+  const { ids, setIds } = useTestId();
+
+  const [modelResponse] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/models/" + modelId,
@@ -33,7 +37,7 @@ const ModelDetail = () => {
     },
   });
 
-  const [newRatingResponse, newRatingError, newRatingLoading, newRatingAF] =
+  const [newRatingResponse, newRatingError, , newRatingAF] =
     useAxiosFunction();
 
   useEffect(() => {
@@ -135,7 +139,7 @@ const ModelDetail = () => {
               <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="inline-flex justify-center rounded-md px-4 py-2  font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                className="inline-flex justify-center rounded-md px-4 py-2  font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
                 id="options-menu"
                 aria-haspopup="true"
                 aria-expanded="true"
@@ -144,7 +148,7 @@ const ModelDetail = () => {
               </button>
             </div>
             {isOpen && (
-              <div className="origin-top-right absolute right-32 mt-28 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div className="origin-top-right absolute right-32 mt-28 w-56 rounded-md shadow-lg bg-white ring-1 ring-black/5">
                 <div
                   className="flex flex-col justify-start py-1"
                   role="menu"
@@ -174,7 +178,7 @@ const ModelDetail = () => {
           <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold mb-4">
             Description
           </h2>
-          <p className="text-gray-800 leading-relaxed break-words font-thin">
+          <p className="text-gray-800 leading-relaxed wrap-break-word font-thin">
             {model.description}
           </p>
         </div>
@@ -183,7 +187,7 @@ const ModelDetail = () => {
           <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold mb-4">
             Model Details
           </h2>
-          <div className="mt-4 text-gray-800 leading-relaxed break-words font-thin">
+          <div className="mt-4 text-gray-800 leading-relaxed wrap-break-word font-thin">
             <p>Type: {model.type}</p>
             <p>Stars: {model.stars}</p>
             <p>Usage: {model.usageCount}</p>

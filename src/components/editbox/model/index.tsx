@@ -10,13 +10,13 @@ const EditModelBox: React.FC<EditModelBoxProps> = ({ modelData, editedData, hand
   console.log(modelData);
   return (
     <div>
-      <div className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-15 z-40">
+      <div className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black/15 z-40">
         <div className="border rounded-lg bg-white w-3/4 h-3/4 p-2 flex flex-col items-center justify-center">
           <h1 className="text-5xl my-2 font-bold mb-4">Edit Model</h1>
           <label className="flex flex-col my-2 w-full ml-5">
             Name:
             <textarea
-              className="ml-2 p-2 rounded bg-white text-black border w-5/6"
+              className="ml-2 p-2 rounded-sm bg-white text-black border w-5/6"
               placeholder={modelData.name}
               onChange={(e) => editedData.name = e.target.value}
             />
@@ -24,7 +24,7 @@ const EditModelBox: React.FC<EditModelBoxProps> = ({ modelData, editedData, hand
           <label className="flex flex-col my-2 w-full ml-5">
             Description:
             <textarea
-              className="ml-2 p-2 rounded bg-white text-black border w-5/6"
+              className="ml-2 p-2 rounded-sm bg-white text-black border w-5/6"
               placeholder={modelData.description}
               onChange={(e) => editedData.description = e.target.value}
             />

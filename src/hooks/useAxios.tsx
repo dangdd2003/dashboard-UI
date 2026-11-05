@@ -1,11 +1,11 @@
-import { AxiosInstance } from "axios";
+import { AxiosInstance, AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 
 type ConfigType = {
   axiosInstance: AxiosInstance;
   method: string;
   url: string;
-  requestConfig?: Object;
+  requestConfig?: AxiosRequestConfig;
 };
 
 const useAxios = (
@@ -32,8 +32,8 @@ const useAxios = (
           url,
           ...requestConfig,
           signal: AbortSignal.timeout(5000),
-        })
-        console.log(res);
+        });
+        if (import.meta.env.DEV) console.log(res);
         setResponse({
           data: res.data,
           status: res.status,

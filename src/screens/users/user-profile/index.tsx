@@ -1,3 +1,4 @@
+import { BASE_URL_USER } from "@/apis/config";
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import Container from "@/components/container";
 import TableDatasets from "@/components/table/datasets";
@@ -7,7 +8,7 @@ import useAxios from "@/hooks/useAxios";
 import Models from "@/screens/models/model-list";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 
 const UserProfile = () => {
   const { auth } = useAuth();
@@ -17,7 +18,7 @@ const UserProfile = () => {
 
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
 
-  const [response, error, loading, refetch] = useAxios({
+  const [response] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/users/profile?username=" + username,
@@ -46,7 +47,7 @@ const UserProfile = () => {
     <Container>
       <div className="flex flex-col items-center justify-center">
         {/* <img src={`http://146.190.100.81:8081/files/get-avatar?id=${response?.data.id}`} alt="" className="w-60 h-60 rounded-full" /> */}
-        <img src={`http://localhost:8081/files/get-avatar?id=${response?.data.id}`} alt="" className="w-60 h-60 rounded-full" />
+        <img src={`${BASE_URL_USER}files/get-avatar?id=${response?.data.id}`} alt="" className="w-60 h-60 rounded-full" />
         <h1 className="text-2xl font-bold my-2">{response.data.username}</h1>
         <span className="flex flex-col font-thin items-center justify-center">
           <p>Joined: {formattedCreateTime}</p>

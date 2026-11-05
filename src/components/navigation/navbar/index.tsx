@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import React, { useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import { Link, Location, useLocation } from "react-router-dom";
+import { Link, Location, useLocation } from "react-router";
 import { NavBarData } from "./NavBarData";
 
 const Navbar = React.memo(() => {
@@ -30,10 +30,10 @@ const Navbar = React.memo(() => {
   const isAboveMedium = useMediaQuery({ query: "(min-width: 768px)" });
   const popupRef = useRef<HTMLDivElement | null>(null);
   const navbarRef = useRef<HTMLDivElement | null>(null);
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: ReturnType<typeof setTimeout>;
 
   const handleClickOutside = (
-    ref: React.RefObject<HTMLDivElement>,
+    ref: React.RefObject<HTMLDivElement | null>,
     setState: React.Dispatch<React.SetStateAction<boolean>>,
   ) =>
     (event: MouseEvent) => {
@@ -91,7 +91,7 @@ const Navbar = React.memo(() => {
             ? (
               <div
                 className={` ${isMenuToggle ? "w-64" : "w-20"
-                  } flex flex-col p-2 h-full bg-white border-r shadow-sm ease-in-out`}
+                  } flex flex-col p-2 h-full bg-white border-r shadow-xs ease-in-out`}
               >
                 {/* TOGGLE AND LOGO */}
                 <div className={`${flexBetween} w-64 p-2`}>

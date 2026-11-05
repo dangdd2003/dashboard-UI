@@ -11,7 +11,7 @@ const Home = () => {
   const { auth } = useAuth();
   const { setAuth } = useAuth();
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
-  const [response, error, loading, refetch] = useAxios({
+  const [response, error] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/users/profile?username=" + auth?.userName,

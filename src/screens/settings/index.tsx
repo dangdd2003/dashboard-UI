@@ -22,7 +22,7 @@ const DeleteConfirmationPopup: React.FC<
   onCancel,
 }) => {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-black/50">
         <div className="bg-white p-4 rounded-md shadow-md">
           <h2 className="text-xl font-semibold mb-4">Confirm Account Deletion</h2>
           <p className="text-gray-600 mb-4">
@@ -72,7 +72,7 @@ const EditableField = (
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 border rounded-md focus:outline-hidden focus:border-blue-500"
             />
             <div>
               <button
@@ -117,13 +117,13 @@ const Settings: React.FC = () => {
   const [isFirstNameEditable, setIsFirstNameEditable] = useState(false);
   const [isLastNameEditable, setIsLastNameEditable] = useState(false);
   const [isEmailEditable, setIsEmailEditable] = useState(false);
-  const [deleteUserResponse, deleteUserError, deleteUserLoading, deleteUserAF] =
+  const [, , , deleteUserAF] =
     useAxiosFunction();
-  const [uploadAvatarResponse, uploadAvatarError, uploadAvatarLoading, uploadAvatarAF] =
+  const [, , , uploadAvatarAF] =
     useAxiosFunction();
 
 
-  const [userResponse, userError, userLoading, userRefetch] = useAxios({
+  const [userResponse] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/users/profile?username=" + auth?.userName,
@@ -217,7 +217,7 @@ const Settings: React.FC = () => {
             onChange={(e) => setAvatar(e.target.files![0])}
           />
           {avatar && (
-            <button onClick={handleSubmitAvatar} className="ml-5 my-4 px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">Submit</button>
+            <button onClick={handleSubmitAvatar} className="ml-5 my-4 px-4 py-2 bg-blue-500 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">Submit</button>
           )}
         </div>
 

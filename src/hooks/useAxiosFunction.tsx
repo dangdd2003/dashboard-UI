@@ -1,15 +1,16 @@
-import { AxiosInstance } from "axios";
+import { AxiosInstance, AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 
 type ConfigType = {
   axiosInstance: AxiosInstance;
   method: string;
   url: string;
-  requestConfig?: Object;
+  requestConfig?: AxiosRequestConfig;
 };
 
 const useAxiosFunction = () => {
-  const [response, setResponse] = useState({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [response, setResponse] = useState<{ data: any; status: number; statusText: string }>({
     data: "",
     status: 0,
     statusText: "",
@@ -30,7 +31,7 @@ const useAxiosFunction = () => {
         ...requestConfig,
         signal: AbortSignal.timeout(50000),
       });
-      console.log(res);
+      if (import.meta.env.DEV) console.log(res);
       setResponse({
         data: res.data,
         status: res.status,

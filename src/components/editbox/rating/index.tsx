@@ -11,7 +11,7 @@ type Props = {
 const NewRatingBox = ({ setIsRatingBoxVisible, setUserComment, setUserRatingStars, userRatingStars, handleNewRatingSubmit }: Props) => {
   return (
     <div>
-      <div className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-15 z-40">
+      <div className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black/15 z-40">
         <div className="border rounded-lg bg-white w-1/2 h-1/2 p-2 flex flex-col items-center justify-center">
           <h1 className="text-5xl my-2 font-bold mb-4">Your Rating</h1>
           <div className="flex items-center mb-5">

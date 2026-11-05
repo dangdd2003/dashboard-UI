@@ -2,7 +2,7 @@ import EditModelBox from "@/components/editbox/model";
 import { IModel } from "@/interfaces/IModel";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 type Props = {
   model: IModel;
@@ -15,7 +15,7 @@ type Props = {
 const Model = ({ model, onEdit, onDelete, onDownload, isOwner }: Props) => {
   const [openItemIndex, setOpenItemIndex] = useState<number>(-1);
   const [isDropdownActive, setIsDropdownActive] = useState<boolean>(false);
-  const [editedModel, setEditedModel] = useState<IModel>(model);
+  const [editedModel] = useState<IModel>(model);
   const [isEditBoxVisible, setIsEditBoxVisible] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -40,17 +40,17 @@ const Model = ({ model, onEdit, onDelete, onDownload, isOwner }: Props) => {
   };
 
   const handleEditClick = () => {
-    editedModel && onEdit(editedModel);
+    if (editedModel) onEdit(editedModel);
     setIsEditBoxVisible(false);
 
   };
 
   const handleDeleteClick = () => {
-    model && onDelete(model);
+    if (model) onDelete(model);
   };
 
   const handleDownloadClick = () => {
-    model && onDownload(model);
+    if (model) onDownload(model);
   }
 
   useEffect(() => {

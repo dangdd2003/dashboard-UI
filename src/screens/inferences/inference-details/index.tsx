@@ -2,20 +2,19 @@ import UserDashboardAI from "@/apis/UserDashboardAI";
 import Container from "@/components/container";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 
 const InferenceDetail = () => {
-  const { auth } = useAuth();
   const { inferenceId } = useParams<{ inferenceId: string }>();
   if (!inferenceId) {
     return <div className="text-red-500">Inference ID not found</div>;
   }
-  const [
-    inferenceResponse,
-    inferenceError,
-    inferenceLoading,
-    inferenceRefetch,
-  ] = useAxios({
+  return <InferenceDetailContent inferenceId={inferenceId} />;
+};
+
+const InferenceDetailContent = ({ inferenceId }: { inferenceId: string }) => {
+  const { auth } = useAuth();
+  useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/inferences/by-model/" + inferenceId,
@@ -41,7 +40,7 @@ const InferenceDetail = () => {
           <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold mb-4">
             Description
           </h2>
-          <p className="text-gray-800 leading-relaxed break-words font-thin">
+          <p className="text-gray-800 leading-relaxed wrap-break-word font-thin">
             {/* {model.description} */}
           </p>
         </div>
@@ -50,7 +49,7 @@ const InferenceDetail = () => {
           <h2 className="lg:text-3xl md:text-2xl sm:text-xl font-bold mb-4">
             Model Details
           </h2>
-          <div className="mt-4 text-gray-800 leading-relaxed break-words font-thin">
+          <div className="mt-4 text-gray-800 leading-relaxed wrap-break-word font-thin">
             {
               /* <p>Type: {model.type}</p>
             <p>Stars: {model.stars}</p>

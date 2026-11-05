@@ -8,7 +8,7 @@ const Searchbar = () => {
           <MagnifyingGlassIcon className="h-6 w-6" />
         </div>
         <input
-          className="peer h-full w-full outline-none text-lg text-gray-700 pr-2"
+          className="peer h-full w-full outline-hidden text-lg text-gray-700 pr-2"
           type="text"
           id="search"
           placeholder="Search something.."

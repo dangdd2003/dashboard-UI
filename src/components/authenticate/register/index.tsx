@@ -29,7 +29,7 @@ const Register = () => {
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
 
-  const [response, error, loading, axiosFetch] = useAxiosFunction();
+  const [response, error, , axiosFetch] = useAxiosFunction();
 
   useEffect(() => {
     userRef.current?.focus();
@@ -97,7 +97,7 @@ const Register = () => {
         </label>
         <input
           id="username"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           ref={userRef}
           required
           type="text"
@@ -110,7 +110,7 @@ const Register = () => {
         {usernameFocus && username && !validUsername && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               Must contains atleast 8 characters <br />
             </p>
           </div>
@@ -127,7 +127,7 @@ const Register = () => {
         </label>
         <input
           id="password"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="password"
           required
           autoComplete="off"
@@ -139,7 +139,7 @@ const Register = () => {
         {passwordFocus && password && !validPassword && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               Must contains atleast 8 characters <br />
               Must contains atleast one: uppercase letter, lowercase letter,
               number, special character.
@@ -162,7 +162,7 @@ const Register = () => {
         </label>
         <input
           id="confirm-password"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="password"
           placeholder="Confirm your password"
           required
@@ -174,7 +174,7 @@ const Register = () => {
         {confirmPasswordFocus && confirmPassword && !validConfirmPassword && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               Must match password
             </p>
           </div>
@@ -191,7 +191,7 @@ const Register = () => {
         </label>
         <input
           id="email"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="email"
           placeholder="Email"
           autoComplete="off"
@@ -202,7 +202,7 @@ const Register = () => {
         {emailFocus && email && !validEmail && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               Must be a valid email
             </p>
           </div>
@@ -213,7 +213,7 @@ const Register = () => {
         </label>
         <input
           id="first-name"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="text"
           required
           placeholder="First Name"
@@ -226,7 +226,7 @@ const Register = () => {
         </label>
         <input
           id="last-name"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="text"
           required
           placeholder="Last Name"
@@ -236,7 +236,7 @@ const Register = () => {
         {response && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               {response.status === 201 ? "Successfully registered" : error}
             </p>
           </div>
@@ -244,7 +244,7 @@ const Register = () => {
         <button
           disabled={!validUsername || !validPassword || !validConfirmPassword ||
             !validEmail}
-          className="my-6 p-2 rounded bg-white text-black disabled:opacity-50"
+          className="my-6 p-2 rounded-sm bg-white text-black disabled:opacity-50"
           type="submit"
         >
           Register

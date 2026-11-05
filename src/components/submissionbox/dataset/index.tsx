@@ -16,7 +16,7 @@ const DatasetSubmissionBox = (props: Props) => {
   const [isExit, setIsExit] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState("")
-  const [fileSubRes, fileSubErr, fileSubLoading, fileSubAF] =
+  const [fileSubRes, fileSubErr, , fileSubAF] =
     useAxiosFunction();
 
   const onSelectFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,14 +68,14 @@ const DatasetSubmissionBox = (props: Props) => {
       )}
 
       <div
-        className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 z-40"
+        className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black/50 z-40"
         onClick={() => setIsNewModelWindowVisible(false)}
       >
         <div
           className="border rounded-lg bg-white w-5/6 h-5/6"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex items-center shadow-sm">
+          <div className="flex items-center shadow-xs">
             <XMarkIcon
               className="w-8 h-8 float-right m-2 cursor-pointer hover:bg-gray-300 rounded-full p-"
               onClick={() => {
@@ -153,14 +153,14 @@ const DatasetSubmissionBox = (props: Props) => {
                 <div className="flex justify-center items-center w-full gap-3 shadow-md">
                   <button
                     onClick={handleSubmit}
-                    className="my-4 px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
+                    className="my-4 px-4 py-2 bg-blue-500 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                     disabled={!fileType}
                   >
                     Submit
                   </button>
                   <button
                     onClick={() => setFile(null)}
-                    className="my-4 px-4 py-2 bg-red-500 text-white rounded"
+                    className="my-4 px-4 py-2 bg-red-500 text-white rounded-sm"
                   >
                     Cancel
                   </button>

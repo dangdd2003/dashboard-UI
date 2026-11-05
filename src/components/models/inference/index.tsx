@@ -14,7 +14,6 @@ const Inference = ({ modelId }: Props) => {
     inferenceResponse,
     inferenceError,
     inferenceLoading,
-    inferenceRefetch,
   ] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",

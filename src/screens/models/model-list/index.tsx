@@ -26,7 +26,7 @@ const Models = ({ userID }: Props) => {
   const isOwner = auth?.userId == userID.toString();
   const [sortOrder, setSortOrder] = useState<number>(0); // 1 for ascending, -1 for descending
   const [alert, setAlert] = useState<number>(0);
-  const [modelsResponse, modelsError, modelsLoading, modelsRefetch] = useAxios({
+  const [modelsResponse, modelsError] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/models/models-by-user/",
@@ -42,18 +42,18 @@ const Models = ({ userID }: Props) => {
   const [
     modelDeleteResponse,
     modelDeleteError,
-    modelDeleteLoading,
+    ,
     modelDeleteAF,
   ] = useAxiosFunction();
 
   const [
     modelEditResponse,
     modelEditError,
-    modelEditLoading,
+    ,
     modelEditAF,
   ] = useAxiosFunction();
 
-  const [modelDownResponse, modelDownError, modelDownLoading, modelDownAF] = useAxiosFunction();
+  const [modelDownResponse, , , modelDownAF] = useAxiosFunction();
 
   const [models, setModels] = useState<IModel[]>(modelsResponse?.data);
   const [originalModels, setOriginalModels] = useState<IModel[]>(
@@ -64,7 +64,7 @@ const Models = ({ userID }: Props) => {
   const [isTypeFilterDropdownOpen, setIsTypeFilterDropdownOpen] = useState(
     false,
   );
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (modelsResponse?.data) {
@@ -292,7 +292,7 @@ const Models = ({ userID }: Props) => {
                 <MagnifyingGlassIcon className="h-6 w-6" />
               </div>
               <input
-                className="peer h-full w-full outline-none text-lg text-gray-700 pr-2"
+                className="peer h-full w-full outline-hidden text-lg text-gray-700 pr-2"
                 type="text"
                 id="search"
                 placeholder="Search something.."
@@ -337,7 +337,7 @@ const Models = ({ userID }: Props) => {
               {isTypeFilterDropdownOpen && (
                 <div
                   ref={dropdownRef}
-                  className="absolute right--0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                  className="absolute right--0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="menu-button"

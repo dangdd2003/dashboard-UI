@@ -4,14 +4,14 @@ import useAuth from "@/hooks/useAuth";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 const Login = () => {
   const userRef = useRef<HTMLInputElement>(null);
   const { setAuth } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [response, error, loading, axiosFetch] = useAxiosFunction();
+  const [response, error, , axiosFetch] = useAxiosFunction();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const Login = () => {
         </label>
         <input
           id="username"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           ref={userRef}
           required
           type="text"
@@ -67,7 +67,7 @@ const Login = () => {
         </label>
         <input
           id="password"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="password"
           required
           autoComplete="off"
@@ -77,13 +77,13 @@ const Login = () => {
         {response && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               {response.status === 200 ? "Successfully login" : error}
             </p>
           </div>
         )}
         <button
-          className="p-2 rounded bg-white text-black my-6"
+          className="p-2 rounded-sm bg-white text-black my-6"
           type="submit"
         >
           Sign In
