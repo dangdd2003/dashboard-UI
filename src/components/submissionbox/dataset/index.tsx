@@ -1,6 +1,5 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import ConfirmAlertBox from "@/components/notification/confirm";
-import useAuth from "@/hooks/useAuth";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { ResourceTypes } from "@/screens/test/ResourceTypes";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -11,12 +10,11 @@ type Props = {
 };
 
 const DatasetSubmissionBox = (props: Props) => {
-  const { auth } = useAuth();
   const { setIsNewModelWindowVisible } = props;
   const [isExit, setIsExit] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState("")
-  const [fileSubRes, fileSubErr, fileSubLoading, fileSubAF] =
+  const [fileSubRes, fileSubErr, , fileSubAF] =
     useAxiosFunction();
 
   const onSelectFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,25 +31,21 @@ const DatasetSubmissionBox = (props: Props) => {
   };
 
   const handleSubmit = () => {
-
+    if (!file) return;
+    // `type` is a query parameter, the file a multipart field; the owner comes from the JWT.
+    const form = new FormData();
+    form.append("resource", file);
     fileSubAF({
       axiosInstance: UserDashboardAI,
       method: "post",
-      url: "resources/create",
+      url: "/resources/create",
       requestConfig: {
-        headers: {
-          'Authorization': `Bearer ${auth?.token}`,
-          "Content-Type": "multipart/form-data",
-          // 'Access-Control-Allow-Origin': '*',
-        },
         params: {
           type: fileType,
-          user_id: auth?.userId,
         },
-        data: {
-          resource: file,
-        },
+        data: form,
       },
+      timeoutMs: 600000,
     });
   };
 
@@ -68,14 +62,14 @@ const DatasetSubmissionBox = (props: Props) => {
       )}
 
       <div
-        className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 z-40"
+        className="w-screen h-screen absolute inset-0 flex justify-center items-center bg-black/50 z-40"
         onClick={() => setIsNewModelWindowVisible(false)}
       >
         <div
           className="border rounded-lg bg-white w-5/6 h-5/6"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex items-center shadow-sm">
+          <div className="flex items-center shadow-xs">
             <XMarkIcon
               className="w-8 h-8 float-right m-2 cursor-pointer hover:bg-gray-300 rounded-full p-"
               onClick={() => {
@@ -119,15 +113,10 @@ const DatasetSubmissionBox = (props: Props) => {
                 className="hidden"
                 name="images"
                 onChange={onSelectFile}
-                multiple
                 accept="*"
               />
-              {!file
-                ? (
-                  <span className="text-gray-500">
-                    No file(s) selected
-                  </span>
-                )
+              {file
+                ? <span className="text-gray-500">1 file selected</span>
                 : <span>No file chosen</span>}
             </label>
 
@@ -153,14 +142,14 @@ const DatasetSubmissionBox = (props: Props) => {
                 <div className="flex justify-center items-center w-full gap-3 shadow-md">
                   <button
                     onClick={handleSubmit}
-                    className="my-4 px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
+                    className="my-4 px-4 py-2 bg-blue-500 text-white rounded-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
                     disabled={!fileType}
                   >
                     Submit
                   </button>
                   <button
                     onClick={() => setFile(null)}
-                    className="my-4 px-4 py-2 bg-red-500 text-white rounded"
+                    className="my-4 px-4 py-2 bg-red-500 text-white rounded-sm"
                   >
                     Cancel
                   </button>

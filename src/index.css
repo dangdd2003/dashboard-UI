@@ -1,7 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,700&family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300&family=Roboto:wght@300;500;700;900&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,700&family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300&family=Roboto:wght@300;500;700;900&display=swap")
+layer(base);
+@import "tailwindcss";
+
+@theme {
+  --color-primary-90: #006e00;
+  --color-primary-container-90: #96fa7f;
+}
+
+/*
+  Tailwind v3 compatibility: keep the v3 defaults so the UI looks the same.
+  See https://tailwindcss.com/docs/upgrade-guide#changes-from-v3
+*/
+@layer base {
+  /* v4 defaults border color to currentcolor; v3 used gray-200. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* v4 placeholders use 50% of the text color; v3 used gray-400. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  /* v3 preflight left the native file-input button styling alone. */
+  ::file-selector-button {
+    all: revert;
+  }
+
+  /* v4 buttons use cursor: default; v3 used pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 body {
   font-family: Roboto, sans-serif;

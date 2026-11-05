@@ -1,54 +1,70 @@
-import { AxiosInstance } from "axios";
-import { useEffect, useState } from "react";
+import { getErrorMessage, getErrorStatus } from "@/apis/errors";
+import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { useEffect, useRef, useState } from "react";
 
 type ConfigType = {
   axiosInstance: AxiosInstance;
   method: string;
   url: string;
-  requestConfig?: Object;
+  requestConfig?: AxiosRequestConfig;
+  /** Client-side timeout. ML endpoints may take up to 300 s on the backend. */
+  timeoutMs?: number;
 };
 
 const useAxiosFunction = () => {
-  const [response, setResponse] = useState({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [response, setResponse] = useState<{ data: any; status: number; statusText: string }>({
     data: "",
     status: 0,
     statusText: "",
   });
   const [error, setError] = useState<string>("");
+  const [errorStatus, setErrorStatus] = useState<number>(0);
   const [loading, setLoading] = useState(false);
-  const [controller, setController] = useState<AbortController>();
+  const controllerRef = useRef<AbortController | null>(null);
 
-  const axiosFetch = async (config: ConfigType): Promise<void> => {
-    const { axiosInstance, method, url, requestConfig } = config;
+  const axiosFetch = async (
+    config: ConfigType,
+  ): Promise<AxiosResponse | undefined> => {
+    const { axiosInstance, method, url, requestConfig, timeoutMs = 60000 } =
+      config;
+    const ctrl = new AbortController();
+    controllerRef.current = ctrl;
     try {
       setLoading(true);
-      const ctrl = new AbortController();
-      setController(ctrl);
+      setError("");
+      setErrorStatus(0);
       const res = await axiosInstance({
         method,
         url,
         ...requestConfig,
-        signal: AbortSignal.timeout(50000),
+        signal: AbortSignal.any([ctrl.signal, AbortSignal.timeout(timeoutMs)]),
       });
-      console.log(res);
+      if (import.meta.env.DEV) console.log(res);
       setResponse({
         data: res.data,
         status: res.status,
         statusText: res.statusText,
       });
-    } catch (err: any) {
-      console.log(err.message);
-      setError(err.message);
+      return res;
+    } catch (err: unknown) {
+      if (ctrl.signal.aborted) return undefined;
+      const message = getErrorMessage(err);
+      console.log(message);
+      setError(message);
+      setErrorStatus(getErrorStatus(err));
+      return undefined;
     } finally {
       setLoading(false);
     }
   };
 
+  // abort an in-flight request when the component unmounts
   useEffect(() => {
-    return () => controller && controller.abort();
-  }, [controller]);
+    return () => controllerRef.current?.abort();
+  }, []);
 
-  return [response, error, loading, axiosFetch] as const;
+  return [response, error, loading, axiosFetch, errorStatus] as const;
 };
 
 export default useAxiosFunction;

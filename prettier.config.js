@@ -1,3 +1,5 @@
+/** @type {import("prettier").Config} */
 export default {
-  plugins: [require("prettier-plugin-tailwind")],
+  plugins: ["prettier-plugin-tailwindcss"],
+  tailwindStylesheet: "./src/index.css",
 };

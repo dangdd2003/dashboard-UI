@@ -1,3 +1,4 @@
+import { BASE_URL_USER } from "@/apis/config";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
   EventHandler,
@@ -7,7 +8,7 @@ import {
   useState,
 } from "react";
 import { SidebarData } from "./SidebarData";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import useAuth from "@/hooks/useAuth";
 
 const useOnClickOutside = (
@@ -46,7 +47,7 @@ const Sidebar = () => {
         {/*   className="w-16 h-16 rounded-full" */}
         {/* /> */}
         <img
-          src={`http://localhost:8081/files/get-avatar?id=${auth?.userId}`}
+          src={`${BASE_URL_USER}files/get-avatar?id=${auth?.userId}`}
           className="w-16 h-16 rounded-full"
         />
       </div>
@@ -62,7 +63,7 @@ const Sidebar = () => {
               {/*   className="ml-8 w-8 h-8 rounded-full" */}
               {/* /> */}
               <img
-                src={`http://localhost:8081/files/get-avatar?id=${auth?.userId}`}
+                src={`${BASE_URL_USER}files/get-avatar?id=${auth?.userId}`}
                 className="ml-8 w-8 h-8 rounded-full"
               />
               <h1 className="text-2xl font-bold">{auth?.userName}</h1>

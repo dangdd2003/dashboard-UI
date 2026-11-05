@@ -21,7 +21,7 @@ const ModelCardSmall: React.FC<Props> = ({ model }) => {
         </div>
         <div className="flex items-center mt-4">
           <StarIcon className="w-5 h-5 text-yellow-500" />
-          <span className="pt-1 ml-2 mr-2">{model.stars}</span>
+          <span className="pt-1 ml-2 mr-2">{model.stars != null ? model.stars.toFixed(1) : "-"}</span>
         </div>
       </div>
     </div>

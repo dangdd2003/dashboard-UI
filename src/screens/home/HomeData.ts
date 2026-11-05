@@ -4,13 +4,13 @@ export const HomeData = [
   {
     title: "Model",
     icon: PuzzlePieceIcon,
-    count: 1,
+    count: 0,
     subtitle: "total created",
   },
   {
-    title: "Post",
+    title: "Rating",
     icon: UserGroupIcon,
-    count: 1,
+    count: 0,
     subtitle: "total posted",
   },
 ];

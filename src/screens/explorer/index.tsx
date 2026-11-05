@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { IModel } from "@/interfaces/IModel";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useMediaQuery } from "react-responsive";
 import ModelCardLarge from "@/components/models/model-card-large";
 import ModelCardSmall from "@/components/models/model-card-small";
@@ -25,9 +25,9 @@ const Explorer = () => {
     false,
   );
   const isAboveMedium = useMediaQuery({ minWidth: 768 });
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [modelsResponse, modelsError, modelsLoading, modelsRefetch] = useAxios({
+  const [modelsResponse] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/models",
@@ -101,7 +101,7 @@ const Explorer = () => {
       const newOrder = prev === 1 ? -1 : prev === -1 ? 0 : 1;
       setModels(
         newOrder !== 0
-          ? [...models].sort((a, b) => newOrder * (a.stars - b.stars))
+          ? [...models].sort((a, b) => newOrder * ((a.stars ?? 0) - (b.stars ?? 0)))
           : originalModels,
       );
       return newOrder;
@@ -142,7 +142,7 @@ const Explorer = () => {
               <MagnifyingGlassIcon className="h-6 w-6" />
             </div>
             <input
-              className={`peer h-full w-full outline-none text-lg text-gray-700 pr-2  ${isAboveMedium ? "text-lg" : "text-sm "}`}
+              className={`peer h-full w-full outline-hidden text-lg text-gray-700 pr-2  ${isAboveMedium ? "text-lg" : "text-sm "}`}
               type="text"
               id="search"
               placeholder="Search something.."
@@ -186,7 +186,7 @@ const Explorer = () => {
             {isTypeFilterDropdownOpen && (
               <div
                 ref={dropdownRef}
-                className="absolute right--0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                className="absolute right--0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden"
                 role="menu"
                 aria-orientation="vertical"
                 aria-labelledby="menu-button"

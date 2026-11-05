@@ -4,7 +4,8 @@ export interface IModel {
   type: string;
   filepath: string;
   description: string;
-  stars: number;
+  /** average rating, null when the model has no ratings */
+  stars: number | null;
   usageCount: number;
   user_id: number;
   username: string;

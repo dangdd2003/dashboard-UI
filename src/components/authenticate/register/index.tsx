@@ -7,7 +7,9 @@ const Register = () => {
   const userRef = useRef<HTMLInputElement>(null);
 
   const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
-  const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
+  // Same policy as the backend's PasswordValidator: 8-255 characters, no whitespace,
+  // at least one lowercase, uppercase, digit and one special character from @#$%^&*()-+=
+  const PWD_REGEX = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&*()\-+=])(?=\S+$).{8,255}$/;
   const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
   const [username, setUsername] = useState("");
@@ -29,7 +31,7 @@ const Register = () => {
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
 
-  const [response, error, loading, axiosFetch] = useAxiosFunction();
+  const [response, error, , axiosFetch] = useAxiosFunction();
 
   useEffect(() => {
     userRef.current?.focus();
@@ -70,16 +72,6 @@ const Register = () => {
         },
       },
     });
-    if (response) {
-      if (response.status === 201) {
-        setUsername("");
-        setPassword("");
-        setConfirmPassword("");
-        setEmail("");
-        setFirstName("");
-        setLastName("");
-      }
-    }
   };
 
   return (
@@ -97,7 +89,7 @@ const Register = () => {
         </label>
         <input
           id="username"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           ref={userRef}
           required
           type="text"
@@ -110,7 +102,7 @@ const Register = () => {
         {usernameFocus && username && !validUsername && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               Must contains atleast 8 characters <br />
             </p>
           </div>
@@ -127,7 +119,7 @@ const Register = () => {
         </label>
         <input
           id="password"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="password"
           required
           autoComplete="off"
@@ -139,10 +131,10 @@ const Register = () => {
         {passwordFocus && password && !validPassword && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
-              Must contains atleast 8 characters <br />
-              Must contains atleast one: uppercase letter, lowercase letter,
-              number, special character.
+            <p className="p-1 text-sm text-gray-300 rounded-md">
+              Must contain 8 to 255 characters and no spaces <br />
+              Must contain at least one: uppercase letter, lowercase letter,
+              number and special character (@#$%^&amp;*()-+=).
             </p>
           </div>
         )}
@@ -162,7 +154,7 @@ const Register = () => {
         </label>
         <input
           id="confirm-password"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="password"
           placeholder="Confirm your password"
           required
@@ -174,7 +166,7 @@ const Register = () => {
         {confirmPasswordFocus && confirmPassword && !validConfirmPassword && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               Must match password
             </p>
           </div>
@@ -191,7 +183,7 @@ const Register = () => {
         </label>
         <input
           id="email"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="email"
           placeholder="Email"
           autoComplete="off"
@@ -202,7 +194,7 @@ const Register = () => {
         {emailFocus && email && !validEmail && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
+            <p className="p-1 text-sm text-gray-300 rounded-md">
               Must be a valid email
             </p>
           </div>
@@ -213,7 +205,7 @@ const Register = () => {
         </label>
         <input
           id="first-name"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="text"
           required
           placeholder="First Name"
@@ -226,25 +218,29 @@ const Register = () => {
         </label>
         <input
           id="last-name"
-          className="mb-4 p-2 rounded bg-white text-black"
+          className="mb-4 p-2 rounded-sm bg-white text-black"
           type="text"
           required
           placeholder="Last Name"
           autoComplete="off"
           onChange={(e) => setLastName(e.target.value)}
         />
-        {response && (
+        {(error || response.status === 201) && (
           <div className="flex items-center w-full">
             <InformationCircleIcon className="w-8 h-8 text-gray-300" />
-            <p className="border-1 p-1 text-sm text-gray-300 rounded-md">
-              {response.status === 201 ? "Successfully registered" : error}
+            <p className="p-1 text-sm text-gray-300 rounded-md">
+              {error
+                ? error.startsWith("409")
+                  ? "Username already exists"
+                  : error
+                : "Successfully registered, you can now sign in"}
             </p>
           </div>
         )}
         <button
           disabled={!validUsername || !validPassword || !validConfirmPassword ||
             !validEmail}
-          className="my-6 p-2 rounded bg-white text-black disabled:opacity-50"
+          className="my-6 p-2 rounded-sm bg-white text-black disabled:opacity-50"
           type="submit"
         >
           Register

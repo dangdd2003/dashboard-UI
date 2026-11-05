@@ -1,7 +1,6 @@
 import UserDashboardAI from "@/apis/UserDashboardAI";
 import EditUserBox from "@/components/editbox/user";
 import ConfirmAlertBox from "@/components/notification/confirm";
-import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
 import useAxiosFunction from "@/hooks/useAxiosFunction";
 import { IUser } from "@/interfaces/IUser";
@@ -25,36 +24,31 @@ import {
 import { useEffect, useState } from "react";
 
 const TableUsers = () => {
-  const { auth } = useAuth();
-  const [deleteUserResponse, deleteUserError, deleteUserLoading, deleteUserAF] =
+  const [deleteUserResponse, deleteUserError, , deleteUserAF] =
     useAxiosFunction();
 
-  const [updateUserResponse, updateUserError, updateUserLoading, updateUserAF] =
-    useAxiosFunction();
+  const [, updateUserError, , updateUserAF] = useAxiosFunction();
+  const [, updateRoleError, , updateRoleAF] = useAxiosFunction();
+  const [updateDone, setUpdateDone] = useState(0);
+  const [originalUserData, setOriginalUserData] = useState<IUser>();
 
   const [showAlert, setShowAlert] = useState(false);
   const [rowToDelete, setRowToDelete] = useState<Row<any> | null>(null);
   const [isEditBoxVisible, setIsEditBoxVisible] = useState(false);
   const [currentUserData, setCurrentUserData] = useState<IUser>();
 
-  const [usersresponse, usersError, userLoading, userRefetch] = useAxios({
+  const [usersresponse, usersError, userLoading, refetchUsers] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
     url: "/users",
-    requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
-    },
   });
 
   const [data, setData] = useState(usersresponse?.data);
 
   useEffect(() => {
-    if (usersresponse) {
+    if (Array.isArray(usersresponse?.data)) {
       setData(usersresponse.data);
     }
-    console.log(data);
   }, [usersresponse]);
 
   const columns = [
@@ -120,52 +114,66 @@ const TableUsers = () => {
   const handleAlertClose = (value: boolean) => {
     // If the value is true, proceed with the deletion
     if (value && rowToDelete) {
-      console.log(rowToDelete.original.username);
-      setData(data.filter((item: any) => item.id !== rowToDelete.original.id));
+      const target = rowToDelete.original;
       deleteUserAF({
         axiosInstance: UserDashboardAI,
         method: "delete",
-        url: `/users/delete?username=${rowToDelete.original.username}`,
-        requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-        },
+        url: `/users/delete/${target.id}`,
+      }).then((res) => {
+        // 204 No Content on success
+        if (res) setData((prev: IUser[]) => prev.filter((item) => item.id !== target.id));
       });
     }
     // Hide the alert
     setShowAlert(false);
   };
 
-  const handleEditClick = (userData: any) => {
-    setCurrentUserData(userData);
+  const handleEditClick = (userData: IUser) => {
+    // edit a copy so the table row is not mutated before the backend accepts it
+    setOriginalUserData(userData);
+    setCurrentUserData({ ...userData });
     setIsEditBoxVisible(true);
   };
 
-  const handleEditBoxSave = () => {
-    console.log(currentUserData);
-    // make sure nothing is empty
+  const handleEditBoxSave = async () => {
     setIsEditBoxVisible(false);
-    if (currentUserData) {
-      updateUserAF({
+    if (!currentUserData || !originalUserData) return;
+    const { id } = currentUserData;
+
+    // Partial update: only send changed, non-blank fields (null/missing = unchanged).
+    const userDetail: Partial<Pick<IUser, "firstname" | "lastname" | "email">> = {};
+    (["firstname", "lastname", "email"] as const).forEach((field) => {
+      const value = currentUserData[field]?.trim();
+      if (value && value !== originalUserData[field]) userDetail[field] = value;
+    });
+
+    let ok = true;
+    if (Object.keys(userDetail).length > 0) {
+      const res = await updateUserAF({
         axiosInstance: UserDashboardAI,
         method: "put",
-        url: "/users/update?id=" + currentUserData.id,
+        url: "/users/update",
         requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-          data: {
-            roles: currentUserData.role,
-            userDetail: {
-              firstname: currentUserData.firstname,
-              lastname: currentUserData.lastname,
-              email: currentUserData.email,
-            },
-          },
+          params: { id },
+          data: { userDetail },
         },
       });
+      ok = ok && !!res;
     }
+    // Roles are only changed through the admin-only PUT /users/{id}/roles.
+    if (currentUserData.role !== originalUserData.role) {
+      const res = await updateRoleAF({
+        axiosInstance: UserDashboardAI,
+        method: "put",
+        url: `/users/${id}/roles`,
+        requestConfig: {
+          data: { role: currentUserData.role },
+        },
+      });
+      ok = ok && !!res;
+    }
+    if (ok) setUpdateDone((n) => n + 1);
+    refetchUsers();
   };
 
   const formattedCreateTime = (createTime: string) => {
@@ -225,7 +233,7 @@ const TableUsers = () => {
             onClose={handleAlertClose}
           />
         )}
-      {deleteUserResponse?.status == 200 && (
+      {deleteUserResponse?.status == 204 && (
         <ConfirmAlertBox
           title="User Deleted"
           description="User has been deleted successfully"
@@ -239,17 +247,18 @@ const TableUsers = () => {
           onClose={() => setShowAlert(false)}
         />
       )}
-      {updateUserResponse?.status == 202 && (
+      {updateDone > 0 && (
         <ConfirmAlertBox
+          key={updateDone}
           title="User Updated"
           description="User has been updated successfully"
           onClose={() => setIsEditBoxVisible(false)}
         />
       )}
-      {updateUserError && (
+      {(updateUserError || updateRoleError) && (
         <ConfirmAlertBox
           title="User Update Failed"
-          description={`User update has failed: ${updateUserError}`}
+          description={`User update has failed: ${updateUserError || updateRoleError}`}
           onClose={() => setIsEditBoxVisible(false)}
         />
       )}
@@ -265,12 +274,12 @@ const TableUsers = () => {
           type="text"
           value={filtering}
           onChange={(e) => setFiltering(e.target.value)}
-          className="peer w-80 h-full border-gray-800 bg-transparent text-blue-gray-700 font-sans font-normal outline outline-0 focus:outline-0 disabled:bg-blue-gray-50 disabled:border-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 border focus:border-2 border-t-transparent focus:border-t-transparent text-sm px-3 py-2.5 rounded-[7px] border-blue-gray-200 focus:border-gray-900"
+          className="peer w-80 h-full border-gray-800 bg-transparent text-blue-gray-700 font-sans font-normal outline-solid outline-0 focus:outline-0 disabled:bg-blue-gray-50 disabled:border-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 border focus:border-2 border-t-transparent focus:border-t-transparent text-sm px-3 py-2.5 rounded-[7px] border-blue-gray-200 focus:border-gray-900"
           placeholder=" "
         />
         <label
           htmlFor="filters"
-          className="flex w-80 h-full border-gray-800 select-none pointer-events-none absolute left-0 font-normal !overflow-visible truncate peer-placeholder-shown:text-blue-gray-500 leading-tight peer-focus:leading-tight peer-disabled:text-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500 transition-all -top-1.5 peer-placeholder-shown:text-sm text-[11px] peer-focus:text-[11px] before:content[' '] before:block before:box-border before:w-2.5 before:h-1.5 before:mt-[6.5px] before:mr-1 peer-placeholder-shown:before:border-transparent before:rounded-tl-md before:border-t peer-focus:before:border-t-2 before:border-l peer-focus:before:border-l-2 before:pointer-events-none before:transition-all peer-disabled:before:border-transparent after:content[' '] after:block after:flex-grow after:box-border after:w-2.5 after:h-1.5 after:mt-[6.5px] after:ml-1 peer-placeholder-shown:after:border-transparent after:rounded-tr-md after:border-t peer-focus:after:border-t-2 after:border-r peer-focus:after:border-r-2 after:pointer-events-none after:transition-all peer-disabled:after:border-transparent peer-placeholder-shown:leading-[3.75] text-gray-500 peer-focus:text-gray-900 before:border-blue-gray-200 peer-focus:before:!border-gray-900 after:border-blue-gray-200 peer-focus:after:!border-gray-900"
+          className="flex w-80 h-full border-gray-800 select-none pointer-events-none absolute left-0 font-normal overflow-visible! truncate peer-placeholder-shown:text-blue-gray-500 leading-tight peer-focus:leading-tight peer-disabled:text-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500 transition-all -top-1.5 peer-placeholder-shown:text-sm text-[11px] peer-focus:text-[11px] before:content[' '] before:block before:box-border before:w-2.5 before:h-1.5 before:mt-[6.5px] before:mr-1 peer-placeholder-shown:before:border-transparent before:rounded-tl-md before:border-t peer-focus:before:border-t-2 before:border-l peer-focus:before:border-l-2 before:pointer-events-none before:transition-all peer-disabled:before:border-transparent after:content[' '] after:block after:grow after:box-border after:w-2.5 after:h-1.5 after:mt-[6.5px] after:ml-1 peer-placeholder-shown:after:border-transparent after:rounded-tr-md after:border-t peer-focus:after:border-t-2 after:border-r peer-focus:after:border-r-2 after:pointer-events-none after:transition-all peer-disabled:after:border-transparent peer-placeholder-shown:leading-[3.75] text-gray-500 peer-focus:text-gray-900 before:border-blue-gray-200 peer-focus:before:border-gray-900! after:border-blue-gray-200 peer-focus:after:border-gray-900!"
         >
           Filter
         </label>
@@ -355,7 +364,7 @@ const TableUsers = () => {
         <button
           disabled={!table.getCanPreviousPage()}
           onClick={() => table.previousPage()}
-          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
+          className={`border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300 ${!table.getCanPreviousPage()
             ? "disabled:opacity-50"
             : "hover:bg-gray-300"
             }`}
@@ -365,7 +374,7 @@ const TableUsers = () => {
         <button
           disabled={!table.getCanNextPage()}
           onClick={() => table.nextPage()}
-          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
+          className={`border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300 ${!table.getCanNextPage()
             ? "disabled:opacity-50"
             : "hover:bg-gray-300"
             }`}

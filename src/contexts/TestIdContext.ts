@@ -1,13 +1,13 @@
-import { createContext } from "react";
+import { createContext, Dispatch, SetStateAction } from "react";
+
+export interface TestIdState {
+  modelId: number;
+  resourceId: number;
+}
 
 interface TestIdContextProps {
-  ids: {
-    modelId: number;
-    resourceId: number;
-  } | null;
-  setIds: (
-    ids: Partial<{ modelId: number; resourceId: number }>,
-  ) => void;
+  ids: Partial<TestIdState> | null;
+  setIds: Dispatch<SetStateAction<Partial<TestIdState> | null>>;
 }
 
 export const TestIdContext = createContext<TestIdContextProps | null>(null);

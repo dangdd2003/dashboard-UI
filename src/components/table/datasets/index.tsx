@@ -1,4 +1,7 @@
+import type { JSX } from "react";
 import UserDashboardAI from "@/apis/UserDashboardAI";
+import { downloadFile } from "@/apis/download";
+import { getErrorMessage } from "@/apis/errors";
 import ConfirmAlertBox from "@/components/notification/confirm";
 import useAuth from "@/hooks/useAuth";
 import useAxios from "@/hooks/useAxios";
@@ -12,7 +15,6 @@ import {
   ArrowLongUpIcon,
   ArrowsUpDownIcon,
   LightBulbIcon,
-  PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -27,7 +29,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 type Props = {
   userId: number;
@@ -45,28 +47,24 @@ const TableDatasets = ({ userId }: Props) => {
   useAxiosFunction();
   const [showAlert, setShowAlert] = useState<number>();
   const [rowToDelete, setRowToDelete] = useState<Row<any> | null>(null);
-  const [datasetsResponse, datasetsError, userLoading, userRefetch] = useAxios({
+  const [datasetsResponse, datasetsError] = useAxios({
     axiosInstance: UserDashboardAI,
     method: "get",
-    url: "/resources/user_id/",
+    url: "/resources/user_id",
     requestConfig: {
-      headers: {
-        Authorization: `Bearer ${auth?.token}`,
-      },
       params: {
         user_id: userId,
       },
     },
   });
 
-  const [deleteResponse, deleteError, deleteLoading, deleteAF] = useAxiosFunction();
-  const [downloadResponse, downloadError, downloadLoading, downloadAF] = useAxiosFunction();
+  const [deleteResponse, deleteError, , deleteAF] = useAxiosFunction();
 
   const [data, setData] = useState<IDataset[]>(datasetsResponse?.data);
 
   useEffect(() => {
-    if (datasetsResponse) {
-      let dataArray = Array.isArray(datasetsResponse.data)
+    if (datasetsResponse?.status === 200) {
+      const dataArray = Array.isArray(datasetsResponse.data)
         ? datasetsResponse.data
         : [datasetsResponse.data];
       setData(dataArray);
@@ -172,71 +170,32 @@ const TableDatasets = ({ userId }: Props) => {
     setShowAlert(1);
   };
 
-  const [hasDownloaded, setHasDownloaded] = useState(false);
-
-  const handleDownload = (row: any) => {
-    setHasDownloaded(false);
-    downloadAF({
-      axiosInstance: UserDashboardAI,
-      method: "get",
-      url: `/files/get-resource`,
-      requestConfig: {
-        headers: {
-          Authorization: `Bearer ${auth?.token}`,
-        },
-        params: {
-          resource_id: row.original.id,
-          user_id: userId,
-        },
-      },
-    });
-  }
-
-  useEffect(() => {
-    if (downloadResponse && downloadResponse.data && !hasDownloaded) {
-      setHasDownloaded(true);
-
-      // Convert the data to a JSON string
-      const jsonString = JSON.stringify(downloadResponse.data);
-      const filename = formatFilePath(downloadResponse.data.filepath)
-
-      // Create a Blob from the JSON string
-      const blob = new Blob([jsonString], { type: 'application/json' });
-
-      // Create a URL for the Blob
-      const url = URL.createObjectURL(blob);
-
-      // Create a link element
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename; // Set the file name
-
-      // Append the link to the body
-      document.body.appendChild(link);
-
-      // Programmatically click the link to download the file
-      link.click();
-
-      // Remove the link from the body
-      document.body.removeChild(link);
-      setHasDownloaded(false);
+  const [downloadError, setDownloadError] = useState("");
+  const handleDownload = async (row: any) => {
+    setDownloadError("");
+    try {
+      await downloadFile(
+        UserDashboardAI,
+        "/files/get-resource",
+        { resource_id: row.original.id },
+        formatFilePath(row.original.filepath),
+      );
+    } catch (err) {
+      setDownloadError(getErrorMessage(err));
     }
-  }, [downloadResponse, hasDownloaded]);
+  };
 
 
   const handleDeleteAlertClose = (value: boolean) => {
     // If the value is true, proceed with the deletion
     if (value && rowToDelete) {
-      setData(data.filter((item: any) => item.id !== rowToDelete.original.id));
+      const targetId = rowToDelete.original.id;
       deleteAF({
         axiosInstance: UserDashboardAI,
         method: "delete",
-        url: `/resources/delete/${rowToDelete.original.id}`,
-        requestConfig: {
-          headers: {
-            Authorization: `Bearer ${auth?.token}`,
-          },
-        },
+        url: `/resources/delete/${targetId}`,
+      }).then((res) => {
+        if (res) setData((prev) => prev.filter((item) => item.id !== targetId));
       });
     }
     // Hide the alert
@@ -269,6 +228,14 @@ const TableDatasets = ({ userId }: Props) => {
 
   return (
     <div className="xl:ml-0 lg:ml-36 md:ml-60 w-full">
+      {downloadError && (
+        <ConfirmAlertBox
+          key={downloadError}
+          title="Download Failed"
+          description={downloadError}
+          onClose={() => setDownloadError("")}
+        />
+      )}
       {datasetsError && (
         <div className="text-red-500">
           <p>{datasetsError}</p>
@@ -302,12 +269,12 @@ const TableDatasets = ({ userId }: Props) => {
           type="text"
           value={filtering}
           onChange={(e) => setFiltering(e.target.value)}
-          className="peer w-80 h-full border-gray-800 bg-transparent text-blue-gray-700 font-sans font-normal outline outline-0 focus:outline-0 disabled:bg-blue-gray-50 disabled:border-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 border focus:border-2 border-t-transparent focus:border-t-transparent text-sm px-3 py-2.5 rounded-[7px] border-blue-gray-200 focus:border-gray-900"
+          className="peer w-80 h-full border-gray-800 bg-transparent text-blue-gray-700 font-sans font-normal outline-solid outline-0 focus:outline-0 disabled:bg-blue-gray-50 disabled:border-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 border focus:border-2 border-t-transparent focus:border-t-transparent text-sm px-3 py-2.5 rounded-[7px] border-blue-gray-200 focus:border-gray-900"
           placeholder=" "
         />
         <label
           htmlFor="model-title"
-          className="flex w-80 h-full border-gray-800 select-none pointer-events-none absolute left-0 font-normal !overflow-visible truncate peer-placeholder-shown:text-blue-gray-500 leading-tight peer-focus:leading-tight peer-disabled:text-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500 transition-all -top-1.5 peer-placeholder-shown:text-sm text-[11px] peer-focus:text-[11px] before:content[' '] before:block before:box-border before:w-2.5 before:h-1.5 before:mt-[6.5px] before:mr-1 peer-placeholder-shown:before:border-transparent before:rounded-tl-md before:border-t peer-focus:before:border-t-2 before:border-l peer-focus:before:border-l-2 before:pointer-events-none before:transition-all peer-disabled:before:border-transparent after:content[' '] after:block after:flex-grow after:box-border after:w-2.5 after:h-1.5 after:mt-[6.5px] after:ml-1 peer-placeholder-shown:after:border-transparent after:rounded-tr-md after:border-t peer-focus:after:border-t-2 after:border-r peer-focus:after:border-r-2 after:pointer-events-none after:transition-all peer-disabled:after:border-transparent peer-placeholder-shown:leading-[3.75] text-gray-500 peer-focus:text-gray-900 before:border-blue-gray-200 peer-focus:before:!border-gray-900 after:border-blue-gray-200 peer-focus:after:!border-gray-900"
+          className="flex w-80 h-full border-gray-800 select-none pointer-events-none absolute left-0 font-normal overflow-visible! truncate peer-placeholder-shown:text-blue-gray-500 leading-tight peer-focus:leading-tight peer-disabled:text-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500 transition-all -top-1.5 peer-placeholder-shown:text-sm text-[11px] peer-focus:text-[11px] before:content[' '] before:block before:box-border before:w-2.5 before:h-1.5 before:mt-[6.5px] before:mr-1 peer-placeholder-shown:before:border-transparent before:rounded-tl-md before:border-t peer-focus:before:border-t-2 before:border-l peer-focus:before:border-l-2 before:pointer-events-none before:transition-all peer-disabled:before:border-transparent after:content[' '] after:block after:grow after:box-border after:w-2.5 after:h-1.5 after:mt-[6.5px] after:ml-1 peer-placeholder-shown:after:border-transparent after:rounded-tr-md after:border-t peer-focus:after:border-t-2 after:border-r peer-focus:after:border-r-2 after:pointer-events-none after:transition-all peer-disabled:after:border-transparent peer-placeholder-shown:leading-[3.75] text-gray-500 peer-focus:text-gray-900 before:border-blue-gray-200 peer-focus:before:border-gray-900! after:border-blue-gray-200 peer-focus:after:border-gray-900!"
         >
           Filter
         </label>
@@ -376,7 +343,7 @@ const TableDatasets = ({ userId }: Props) => {
         <button
           disabled={!table.getCanPreviousPage()}
           onClick={() => table.previousPage()}
-          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanPreviousPage()
+          className={`border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300 ${!table.getCanPreviousPage()
             ? "disabled:opacity-50"
             : "hover:bg-gray-300"
             }`}
@@ -386,7 +353,7 @@ const TableDatasets = ({ userId }: Props) => {
         <button
           disabled={!table.getCanNextPage()}
           onClick={() => table.nextPage()}
-          className={`"border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300" ${!table.getCanNextPage()
+          className={`border border-gray-300 p-2 rounded-md disabled:opacity-50 hover:bg-gray-300 ${!table.getCanNextPage()
             ? "disabled:opacity-50"
             : "hover:bg-gray-300"
             }`}
